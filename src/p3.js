@@ -42,10 +42,10 @@ const EVT = {
     in_transit: "Посылка в пути", out_for_delivery: "Курьер везёт посылку покупателю", completed: "Посылка доставлена", partial_complete: "Посылка доставлена частично",
     on_hold: "Fargo приостановил доставку", delivery_rejected: "Fargo отказался принять заказ", cancelled_due_to_out_of_delivery_area: "Адрес вне зоны доставки Fargo",
     delivery_failed: "Доставка не удалась", dispatch_for_return: "Посылка отправлена обратно продавцу", returning_to_origin: "Посылка едет обратно продавцу",
-    courier_lost_signal: "Неизвестный статус перевозчика", cancel_refused: "Fargo отказал в отмене брони",
+    courier_lost_signal: "Неизвестный статус перевозчика", cancel_refused: "Fargo отказал в отмене брони", cancelled: "Прежняя доставка Fargo отменена по запросу Optom.uz",
   },
   yg: {
-    performer_lookup: "Yandex Go ищет курьера", performer_not_found: "Курьер не найден", performer_found: "Курьер найден и едет в филиал", pickuped: "Курьер забрал заказ",
+    performer_lookup: "Yandex Go ищет курьера", cancelled_by_taxi: "Yandex Go отказался выполнить доставку", performer_not_found: "Курьер не найден", performer_found: "Курьер найден и едет в филиал", pickuped: "Курьер забрал заказ",
     delivered: "Заказ доставлен", delivered_finish: "Yandex Go закрыл доставку", failed: "Доставка не удалась",
     cancelled_with_items_on_hands: "Курьер отменил доставку, товар у курьера", cancelled: "Доставка Yandex Go отменена по запросу Optom.uz",
   },
@@ -76,6 +76,10 @@ const ORD0 = [
   { n: "68731204", d: "27.10.2026 09:12", b: "ООО «Строй Маркет»", br: "chil", m: "fg", st: 25, exp: "28.10.2026 – 30.10.2026", fid: "FG-5512087", sum: 6300000, it: [["Холодильник Artel HD 455 RN", 3]],
     h: [PAY("27.10.2026 09:12"), ["27.10.2026 10:05", 16, 25, "s", "A", "Подтверждён; Fargo забронирован"]],
     ev: [["27.10.2026 10:05", "accepted", 25, "FG-5512087"], ["27.10.2026 10:48", "on_his_way", 25, "FG-5512087"]] },
+  { n: "68731120", d: "27.10.2026 08:15", b: "ООО «Восток Трейд»", br: "chil", m: "yg", st: 55, exp: "27.10.2026 – 28.10.2026", sum: 1950000, it: [["Вентилятор Artel FN 16", 15]],
+    h: [PAY("27.10.2026 08:15"), ["27.10.2026 08:40", 16, 20, "s", "A", "Подтверждён; ищем курьера Yandex Go"], ["27.10.2026 09:02", 20, 55, "c", "C", "cancelled_by_taxi"]],
+    ev: [["27.10.2026 08:40", "performer_lookup", 20], ["27.10.2026 09:02", "cancelled_by_taxi", 55]],
+    prob: { t: "notacc", since: "27.10.2026 09:02", det: "Yandex Go: cancelled_by_taxi. Перезаказать доставку может продавец" } },
   { n: "68731015", d: "26.10.2026 15:55", b: "ИП Рахимов Ш.", br: "sam", m: "fg", st: 55, exp: "29.10.2026 – 31.10.2026", sum: 4400000, it: [["Стиральная машина Artel WF 60", 2]],
     h: [PAY("26.10.2026 15:55"), ["26.10.2026 17:32", 16, 55, "s", "A", "Подтверждён; Fargo отказал в брони"]],
     ev: [["26.10.2026 17:32", "cancelled_due_to_out_of_delivery_area", 55]],
@@ -145,7 +149,7 @@ const ACTS = ["Отменить заказ", "Отправить заново", 
 let S = {};
 function reset(o) {
   closeModal();
-  S = Object.assign({ v: "list", cur: null, f: { st: [], m: "", br: "", pr: false }, stOpen: false, pf: { m: "", t: [] }, lf: { a: "", act: "" }, merged: false, variants: null, demoRefuse: null, fgRefuse: false, focus: null },
+  S = Object.assign({ v: "list", cur: null, f: { st: [], m: "", br: "", pr: false }, stOpen: false, pf: { m: "", t: [] }, lf: { a: "", act: "", from: "", to: "" }, merged: false, variants: null, demoRefuse: null, demoNoCancel: false, fgRefuse: false, stale: false, last: null, focus: null },
     o || {});
   S.o = JSON.parse(JSON.stringify(ORD0));
   render();
@@ -207,12 +211,12 @@ const ABTN = {
   returned: ["Посылка вернулась", "out"], retry: ["Разрешить новую попытку", "out"], cancel: ["Отменить заказ", "dan"], resolve: ["Решено", "soft"],
 };
 const abtn = (k, n, sm) => `<button class="btn ${ABTN[k][1]} ${sm ? "sm" : ""}" data-act="${k}" data-n="${n}">${ABTN[k][0]}</button>`;
-function noActHint(o) {
-  if (o.st === 26) return "Отмена недоступна: посылка возвращается продавцу. Заказ закончится статусом 50 Refunded — по событию перевозчика или по кнопке «Посылка вернулась».";
-  if (o.st === 35) return "Отмена недоступна: из 35 Delivered заказ не отменяют, покупатель оформляет возврат. Если покупатель сообщил, что заказ не получил, — «Не доставлен».";
-  if (o.st === 40) return "40 Success — финальный статус: действий по статусу нет. Завершение ставят только покупатель или задание.";
-  if (FINAL.includes(o.st)) return "Финальный статус: действий по статусу нет.";
-  if (o.st === 30 && isCarrier(o) && !(o.prob && o.prob.t === "disp")) return `Отмена недоступна: посылка у курьера ${carrierName(o)} (30 Shipped).`;
+function cancelWhy(o) { // exact texts when cancel is not offered
+  if (canCancel(o)) return "";
+  if (o.st === 26) return "Посылка возвращается к продавцу — отменить нельзя.";
+  if (o.st === 35) return "Заказ доставлен — оформляется возврат.";
+  if (FINAL.includes(o.st)) return "Заказ завершён или отменён.";
+  if (o.st === 30) return "Заказ у курьера — отменить нельзя.";
   return "";
 }
 
@@ -249,8 +253,8 @@ function listView() {
 // ---------- order page (OL-A1, OL-A3, OL-A5) ----------
 function orderView() {
   const o = ord(S.cur), sl = SEL[BRN[o.br][1]];
-  const vbar = S.variants ? `<div class="dem"><b>демо: заказ</b>${S.variants.map(v => `<button data-var="${v[0]}" class="${S.cur === v[0] ? "on" : ""}">${v[1]}</button>`).join("")}
-      ${o.m === "fg" && o.st === 25 ? `<label style="margin-left:8px"><input type="checkbox" id="fgref" ${S.fgRefuse ? "checked" : ""}>демо: Fargo отказал в отмене</label>` : ""}</div>` : "";
+  const vbar = `<div class="dem">${S.variants ? `<b>демо: заказ</b>${S.variants.map(v => `<button data-var="${v[0]}" class="${S.cur === v[0] ? "on" : ""}">${v[1]}</button>`).join("")}` : "<b>демо:</b>"}
+      ${o.m === "fg" && o.st === 25 ? `<label style="margin-left:8px"><input type="checkbox" id="fgref" ${S.fgRefuse ? "checked" : ""}>Fargo отказал в отмене</label>` : ""}${staleDemo()}</div>`;
   const kv = [["Дата оплаты", o.d], ["Способ доставки", MTH[o.m] + (o.fid ? `<div class="mut">FargoOrderId: <span class="mono">${o.fid}</span></div>` : "")], ["Филиал", BRN[o.br][0]],
     ["Покупатель", o.b], ["Продавец", sl[0]], ["Ожидается", FINAL.includes(o.st) ? "—" : o.exp],
     ["Сумма", som(o.sum)], ["Покупатель видит", `«${buyerSees(o)}»`], ["Продавец видит", `«${sellerSees(o)}»`]];
@@ -261,9 +265,10 @@ function orderView() {
       Кто отменил (CancelledBy): <b style="display:inline">${o.cb}</b>${o.cbw ? " · " + o.cbw : ""} · Причина (CancelReason): <span class="mono">${o.cr}</span> · ${o.cat}<br>Комментарий: ${o.cc ? esc(o.cc) : "<span class='mut'>нет</span>"}</div></div>` : "";
   const pb = o.prob ? `<div class="alert w"><span class="ic">!</span><div style="flex:1"><b>В списке «Проблемы с доставкой» с ${o.prob.since} (${ago(o.prob.since)}): ${esc(probText(o))}</b>${esc(o.prob.det || "")}
       <div class="ra">${abtn("resolve", o.n, true)}<button class="btn link sm" data-nav="prob">Открыть список проблем</button></div></div></div>` : "";
-  const acts = ordActs(o), hint = noActHint(o);
-  const abar = `<div class="abar"><span class="lbl">Действия:</span>${acts.length ? acts.map(k => abtn(k, o.n)).join("") : '<span class="mut">для этого статуса и способа доставки действий нет</span>'}<span class="sp"></span>
-      <button class="btn out" data-act="msg" data-n="${o.n}">${ICON.chat.replace("<svg", '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7"')}Написать продавцу</button></div>${hint ? `<p class="hint" style="margin:6px 2px 0">${hint}</p>` : ""}`;
+  const cl = !o.prob && o.closed && o.closed.st === o.st ? `<div class="alert i"><span class="ic">i</span><div><b>Строка «${esc(o.closed.p)}» закрыта ${o.closed.at} (${o.closed.by}, «Решено»)</b>Статус не изменился: покупатель по-прежнему видит «Проблема с доставкой», продавец — во вкладке «Проблемные». Строка вернётся в список при новом событии проблемы или если статус не изменится до ${o.closed.until}.</div></div>` : "";
+  const acts = ordActs(o), why = cancelWhy(o);
+  const abar = `<div class="abar"><span class="lbl">Действия:</span>${acts.map(k => abtn(k, o.n)).join("")}${why ? `<span class="why3">${why}</span>` : ""}<span class="sp"></span>
+      <button class="btn out" data-act="msg" data-n="${o.n}">${ICON.chat.replace("<svg", '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7"')}Написать продавцу</button></div>`;
   // history and events
   const hRows = o.h.map(r => { const w = whoTxt(o, r[3]); return { t: r[0], k: "h", r, w }; });
   const eRows = o.ev.map(r => ({ t: r[0], k: "e", r }));
@@ -286,7 +291,7 @@ function orderView() {
   const adm = `<div class="sec3"><h3>Действия администраторов по заказу</h3>${mine.length ? `<table class="t3"><thead><tr><th>Время</th><th>Администратор</th><th>Действие</th><th>Статус</th><th>Комментарий</th></tr></thead><tbody>${mine.map(l => `<tr><td class="small">${l.t}</td><td>${l.a}</td><td>${l.act}</td><td class="small">${logSt(l)}</td><td class="small">${l.c ? esc(l.c) : "—"}</td></tr>`).join("")}</tbody></table>` : '<p class="hint">Пока нет.</p>'}</div>`;
   const items = `<div class="sec3"><h3>Товары</h3><table class="t3"><tbody>${o.it.map(i => `<tr><td>${i[0]}</td><td style="width:120px">${i[1]} шт.</td></tr>`).join("")}</tbody></table>${FINAL.includes(o.st) && o.st !== 40 ? '<p class="hint">Количества сохранены как в заказе; остаток возвращён на склад филиала.</p>' : ""}</div>`;
   return shell("list", `<div class="apanel"><span class="back3" data-nav="list">‹ Заказы</span><h1>Заказ №${o.n} ${stHead(o.st)}</h1>${vbar}
-    <div class="dl3">${kv.map(x => `<div><span>${x[0]}</span>${x[1]}</div>`).join("")}</div>${canc}${pb}${abar}
+    <div class="dl3">${kv.map(x => `<div><span>${x[0]}</span>${x[1]}</div>`).join("")}</div>${canc}${pb}${cl}${abar}
     <div class="sec3"><div class="row"><h3 style="margin:0">Журнал заказа</h3><span class="seg"><span data-mg="0" class="${S.merged ? "" : "on"}">Раздельно</span><span data-mg="1" class="${S.merged ? "on" : ""}">Вместе по времени</span></span></div></div>
     ${S.merged ? `<div style="margin-top:10px">${logs}</div>` : logs}${adm}${items}</div>`);
 }
@@ -295,11 +300,12 @@ function orderView() {
 function probView() {
   const P = S.pf;
   const rows = S.o.filter(o => o.prob && (!P.m || o.m === P.m) && (!P.t.length || P.t.includes(o.prob.t))).sort((a, b) => pt(a.prob.since) - pt(b.prob.since));
-  const dem = S.demoRefuse != null ? `<div class="dem"><label><input type="checkbox" id="drf" ${S.demoRefuse ? "checked" : ""}>демо: Fargo снова отказал</label><span class="mut">— при «Отправить заново» Fargo вернёт отказ, и заказ перейдёт в 55</span></div>` : "";
+  const dem = `<div class="dem"><b>демо:</b>${S.demoRefuse != null ? `<label><input type="checkbox" id="dnc" ${S.demoNoCancel ? "checked" : ""}>Fargo не отменил прежнюю доставку</label>
+      <label><input type="checkbox" id="drf" ${S.demoRefuse ? "checked" : ""}>Fargo снова отказал</label>` : ""}${staleDemo()}</div>`;
   const table = rows.length ? `<table class="t3"><thead><tr><th style="width:150px">Заказ</th><th>Способ</th><th>Проблема</th><th style="width:120px">С какого времени</th><th>Продавец</th><th style="width:250px">Действия</th></tr></thead><tbody>
     ${rows.map(o => `<tr class="${S.focus === o.n ? "hl" : ""}"><td><b>№${o.n}</b>${stCell(o.st)}</td><td>${MTH[o.m]}</td><td><b style="font-weight:600">${esc(probText(o))}</b><div class="mut">${esc(o.prob.det || "")}</div>${o.retryOk ? '<span class="pill g" style="margin-top:4px">Новая попытка разрешена</span>' : ""}</td>
       <td class="small">${o.prob.since}<div class="mut">${ago(o.prob.since)}</div></td><td>${SEL[BRN[o.br][1]][0]}<div class="mut">${BRN[o.br][0]}</div></td>
-      <td><div class="ra">${probActs(o).map(k => abtn(k, o.n, true)).join("")}<button class="btn link sm" data-open="${o.n}">Открыть заказ</button></div>${o.m === "yg" && ["exc", "ygnb"].includes(o.prob.t) ? '<div class="mut" style="margin-top:4px">Перезаказать Yandex Go может только продавец</div>' : ""}</td></tr>`).join("")}</tbody></table>`
+      <td><div class="ra">${probActs(o).map(k => abtn(k, o.n, true)).join("")}<button class="btn link sm" data-open="${o.n}">Открыть заказ</button></div>${o.m === "yg" && ["exc", "ygnb", "notacc"].includes(o.prob.t) ? '<div class="mut" style="margin-top:4px">Перезаказать Yandex Go может только продавец</div>' : ""}</td></tr>`).join("")}</tbody></table>`
     : `<div class="empty3">${P.m || P.t.length ? "По выбранным фильтрам проблем нет." : "Сейчас нет заказов с проблемами доставки."}${P.m || P.t.length ? ' <button class="btn link sm" id="pclr">Сбросить фильтры</button>' : ""}</div>`;
   return shell("prob", `<div class="apanel"><h1>Проблемы с доставкой <span class="pill r">${S.o.filter(o => o.prob).length}</span></h1>
     <div class="fbar"><select class="inp" id="pm"><option value="">Способ доставки: все</option>${MORD.map(k => `<option value="${k}" ${P.m === k ? "selected" : ""}>${MTH[k]}</option>`).join("")}</select><span class="hint">сначала самые старые · найдено: ${rows.length}</span></div>
@@ -311,11 +317,13 @@ function probView() {
 function logSt(l) { return l.fr == null ? "—" : l.to == null ? `${stName(l.fr)} <span class="mut">(без изменения)</span>` : `${stName(l.fr)} → <b>${stName(l.to)}</b>`; }
 function logView() {
   const L = S.lf;
-  const rows = LOG.filter(l => (!L.a || l.a === L.a) && (!L.act || l.act === L.act)).sort((a, b) => pt(b.t) - pt(a.t));
+  const iso = t => t.slice(6, 10) + "-" + t.slice(3, 5) + "-" + t.slice(0, 2);
+  const rows = LOG.filter(l => (!L.a || l.a === L.a) && (!L.act || l.act === L.act) && (!L.from || iso(l.t) >= L.from) && (!L.to || iso(l.t) <= L.to)).sort((a, b) => pt(b.t) - pt(a.t));
   const admins = [...new Set(LOG.map(l => l.a))];
   return shell("log", `<div class="apanel"><h1>Журнал действий администраторов</h1>
     <div class="fbar"><select class="inp" id="la"><option value="">Администратор: все</option>${admins.map(a => `<option ${L.a === a ? "selected" : ""}>${a}</option>`).join("")}</select>
-      <select class="inp" id="lact"><option value="">Действие: все</option>${ACTS.map(a => `<option ${L.act === a ? "selected" : ""}>${a}</option>`).join("")}</select><span class="hint">Найдено: ${rows.length} · записи нельзя изменить или удалить</span></div>
+      <select class="inp" id="lact"><option value="">Действие: все</option>${ACTS.map(a => `<option ${L.act === a ? "selected" : ""}>${a}</option>`).join("")}</select>
+      <span class="dr3">Дата: с <input type="date" class="inp" id="lfrom" value="${L.from}" max="2026-10-27"> по <input type="date" class="inp" id="lto" value="${L.to}" max="2026-10-27"></span>${L.a || L.act || L.from || L.to ? '<button class="btn link sm" id="lclr">Сбросить</button>' : ""}<span class="hint">Найдено: ${rows.length} · записи нельзя изменить или удалить</span></div>
     ${rows.length ? `<table class="t3"><thead><tr><th>Время</th><th>Администратор</th><th>Заказ</th><th>Действие</th><th>Статус: было → стало</th><th>Комментарий</th></tr></thead><tbody>
       ${rows.map(l => `<tr class="${l.nw ? "nw" : ""}"><td class="small">${l.t}${l.nw ? '<div class="mut">в этой сессии</div>' : ""}</td><td>${l.a} <span class="mut">(admin)</span></td><td>${ord(l.n) ? `<a href="#" data-open="${l.n}">№${l.n}</a>` : "№" + l.n}</td><td>${l.act}</td><td class="small">${logSt(l)}</td><td class="small">${l.c ? esc(l.c) : '<span class="mut">—</span>'}</td></tr>`).join("")}</tbody></table>`
       : '<div class="empty3">Нет действий по выбранным фильтрам.</div>'}</div>`);
@@ -351,6 +359,12 @@ function bind() {
   on("fgref", "onchange", e => { S.fgRefuse = e.target.checked; });
   on("la", "onchange", e => { S.lf.a = e.target.value; render(); });
   on("lact", "onchange", e => { S.lf.act = e.target.value; render(); });
+  on("lfrom", "onchange", e => { S.lf.from = e.target.value; render(); });
+  on("lto", "onchange", e => { S.lf.to = e.target.value; render(); });
+  on("lclr", "onclick", () => { S.lf = { a: "", act: "", from: "", to: "" }; render(); });
+  on("dnc", "onchange", e => { S.demoNoCancel = e.target.checked; });
+  on("stale", "onchange", e => { S.stale = e.target.checked; });
+  on("rep", "onclick", () => { const l = S.last; toast(`Повторный запрос «${l.act}» по заказу №${l.n}: ошибки нет, заказ не изменился, второй записи в истории и журнале нет.`); });
 }
 
 // ---------- dialogs ----------
@@ -365,13 +379,18 @@ function dlg(op) {
   $("#dok", m).onclick = () => {
     const v = ta ? ta.value.trim() : "";
     if (op.req && !v) { ta.classList.add("err"); $("#de", m).textContent = op.reqErr; return; }
+    if (S.stale && !op.noStale) { $("#dres", m).innerHTML = `<div class="alert e"><span class="ic">!</span><div>Статус заказа изменился. Обновите страницу.<div class="ra"><button class="btn out sm" id="drl">Обновить</button></div></div></div>`;
+      $("#drl", m).onclick = () => { closeModal(); S.stale = false; render(); toast("Заказ загружен заново."); }; return; }
     const err = op.onOk(v);
     if (err) { $("#dres", m).innerHTML = `<div class="alert e"><span class="ic">!</span><div>${err}</div></div>`; return; }
     closeModal();
   };
 }
-function addLog(o, act, fr, to, c) { LOG.unshift({ t: ft(CLK), a: ME, n: o.n, act, fr, to, c, nw: true }); }
-function setSt(o, to, src, c) { const t = nowS(); o.h.push([t, o.st, to, "a:" + ME, src, c]); const fr = o.st; o.st = to; return [t, fr]; }
+function addLog(o, act, fr, to, c) { LOG.unshift({ t: ft(CLK), a: ME, n: o.n, act, fr, to, c, nw: true }); if (act !== "Написать продавцу") S.last = { n: o.n, act }; }
+function staleDemo() {
+  return `<label style="margin-left:8px"><input type="checkbox" id="stale" ${S.stale ? "checked" : ""}>другой администратор уже изменил заказ</label>${S.last ? `<button id="rep">повторить последний запрос</button>` : ""}`;
+}
+function setSt(o, to, src, c) { const t = nowS(); o.h.push([t, o.st, to, "a:" + ME, src, c]); const fr = o.st; o.st = to; o.closed = null; return [t, fr]; }
 function corrDlg(o, to, actName, after, txt) {
   dlg({ title: txt ? txt[0] : `Изменить статус на «${stFull(to)}»?`, sub: txt ? txt[1] : "Используйте, только если служба доставки не обновила заказ.", box: `Заказ №${o.n} · ${MTH[o.m]} · сейчас ${stFull(o.st)}`,
     label: "Комментарий (обязательно)", req: true, reqErr: "Напишите, почему меняете статус.", okText: actName, okCls: "pri",
@@ -388,24 +407,31 @@ function doAct(k, n) {
       toast(`Заказ №${o.n} отменён: 46 CancelledByAdmin.${isCarrier(o) && [20, 25, 24, 55, 60, 30].includes(fr) && o.fid ? " Бронь Fargo отменена." : ""} Покупатель и продавец получили уведомление.`);
     } });
   if (k === "resend") return dlg({ title: "Отправить заказ в Fargo заново?", sub: "Fargo рассчитает новую цену; покупатель не доплачивает.", label: "Комментарий (обязательно)", req: true, reqErr: "Напишите комментарий.", noText: "Назад",
-    box: `${stFull(o.st)} → 25 Processing, если Fargo примет заказ<br>${o.fid ? `Текущий FargoOrderId <span class="mono">${o.fid}</span> заменится новым и останется в истории и событиях.` : "Брони Fargo по заказу сейчас нет."}`, okText: "Отправить заново",
+    box: `${stFull(o.st)} → 25 Processing, если Fargo примет заказ<br>${[24, 60].includes(o.st) && o.fid ? `Сначала Fargo отменит прежнюю доставку <span class="mono">${o.fid}</span>, затем примет новую. Прежний FargoOrderId останется в истории и событиях.` : "Брони Fargo по заказу сейчас нет — отменять нечего."}`, okText: "Отправить заново",
     onOk: cm => {
+      const prev = [24, 60].includes(o.st) && o.fid;
+      if (prev && S.demoNoCancel) { o.ev.push([nowS(), "cancel_refused", null, o.fid]); render(); return "Fargo не отменил прежнюю доставку: курьер уже в пути. Новая доставка не заказана, заказ не изменился."; }
+      if (prev) o.ev.push([nowS(), "cancelled", null, o.fid]);
       if (S.demoRefuse) {
-        const [t, fr] = setSt(o, 55, "A", "Отправлено заново; Fargo отказал: delivery_rejected. " + cm); o.ev.push([t, "delivery_rejected", 55]); o.prob = { t: "notacc", since: t, det: "После «Отправить заново»: delivery_rejected" };
+        const [t, fr] = setSt(o, 55, "A", "Отправлено заново; Fargo отказал: delivery_rejected. " + cm); o.ev.push([t, "delivery_rejected", 55]); o.prob = { t: "notacc", since: t, det: "После «Отправить заново»: delivery_rejected" }; o.fid = null;
         addLog(o, "Отправить заново", fr, 55, "Fargo отказал: delivery_rejected. " + cm); S.focus = o.n;
         if (S.pf.t.length && !S.pf.t.includes("notacc")) S.pf.t.push("notacc"); // keep the row visible under the active type filter
         render(); toast("Fargo снова отказал: заказ в 55 FargoDoesNotAcceptOrder и остаётся в списке."); return;
       }
-      const old = o.fid, nf = "FG-55" + String(13000 + Math.floor(Math.random() * 900)); o.fid = nf;
+      const old = prev || null, nf = "FG-55" + String(13000 + Math.floor(Math.random() * 900)); o.fid = nf;
       const c = `Новый FargoOrderId ${nf}${old ? ` (был ${old})` : ""}`;
       const [t, fr] = setSt(o, 25, "A", `Отправлено заново. ${c}. ${cm}`); o.ev.push([t, "accepted", 25, nf]); o.prob = null; o.bst = null;
       addLog(o, "Отправить заново", fr, 25, `${c}. ${cm}`); render(); toast(`Fargo принял заказ: 25 Processing. ${c}. Строка убрана из списка.`);
     } });
-  if (k === "resolve") return dlg({ title: `Решено: заказ №${o.n}`, sub: o.prob.t === "part" ? "Статус заказа не изменится. Автозавершение возобновится." : `Статус заказа не изменится (${stName(o.st)}). Строка уйдёт из списка.`,
+  const stb = [24, 26, 55, 60].includes(o.st);
+  if (k === "resolve") return dlg({ title: `Решено: заказ №${o.n}`, sub: o.prob.t === "part" ? "Статус заказа не изменится. Автозавершение возобновится."
+      : stb ? `Строка закроется, статус останется ${stName(o.st)}: покупатель по-прежнему видит «Проблема с доставкой», продавец — во вкладке «Проблемные». Строка вернётся при новом событии проблемы или если статус не изменится за 24 часа.` : `Статус заказа не изменится (${stName(o.st)}). Строка уйдёт из списка.`,
     box: esc(probText(o)) + (o.prob.det ? `<div class="mut">${esc(o.prob.det)}</div>` : ""), label: "Комментарий (обязательно)", req: true, reqErr: "Напишите комментарий.", okText: "Решено", okCls: "pri",
     onOk: c => {
-      const part = o.prob.t === "part"; nowS(); addLog(o, "Решено", o.st, null, `${probText(o)}: ${c}`); o.prob = null; render();
-      toast(part ? `Проблема закрыта. Автозавершение возобновлено: заказ завершится ${o.due.slice(0, 10)} в 23:59.` : "Проблема закрыта, статус заказа не изменился.");
+      const part = o.prob.t === "part", t = nowS(); addLog(o, "Решено", o.st, null, `${probText(o)}: ${c}`);
+      if (stb) o.closed = { st: o.st, p: probText(o), at: t, by: ME, until: ft(pt(t) + 864e5) };
+      o.prob = null; render();
+      toast(part ? `Проблема закрыта. Автозавершение возобновлено: заказ завершится ${o.due.slice(0, 10)} в 23:59.` : stb ? "Строка закрыта; вернётся, если статус не изменится за 24 часа." : "Проблема закрыта, статус заказа не изменился.");
     } });
   if (k === "back") return corrDlg(o, 25, "Вернуть в обработку", () => { o.bst = "В пути"; toast("Статус изменён: 30 → 25 Processing. Покупатель по-прежнему видит «В пути»."); },
     ["Вернуть заказ в статус «В обработке»?", "Используйте, только если продавец отметил отправку по ошибке."]);
@@ -414,7 +440,7 @@ function doAct(k, n) {
   if (k === "markdel") return corrDlg(o, 35, "Отметить доставленным", (c, t) => { o.prob = null; o.dlv = t; o.due = dueAfter(t); o.bst = null; toast(`35 Delivered. Покупатель получил уведомление о доставке; заказ завершится автоматически ${o.due.slice(0, 10)} в 23:59.`); });
   if (k === "retry") return dlg({ title: `Разрешить новую попытку доставки по заказу №${o.n}?`, sub: "Продавец снова сможет отправить заказ (24 OnHold → 30 Shipped). Статус сейчас не изменится.", label: "Комментарий (необязательно)", okText: "Разрешить",
     onOk: c => { nowS(); o.retryOk = true; addLog(o, "Разрешить новую попытку", o.st, null, c); render(); toast("Продавец может начать новую попытку доставки."); } });
-  if (k === "msg") return dlg({ title: `Сообщение продавцу ${SEL[BRN[o.br][1]][0]}`, sub: `По заказу №${o.n}. Сообщение придёт в чат продавца.`, label: "Сообщение", req: true, reqErr: "Напишите сообщение.", okText: "Отправить",
+  if (k === "msg") return dlg({ title: `Сообщение продавцу ${SEL[BRN[o.br][1]][0]}`, sub: `По заказу №${o.n}. Сообщение придёт в чат продавца.`, label: "Сообщение", req: true, reqErr: "Напишите сообщение.", okText: "Отправить", noStale: true,
     onOk: c => { nowS(); addLog(o, "Написать продавцу", null, null, c); render(); toast("Сообщение отправлено в чат продавца."); } });
 }
 
@@ -430,17 +456,21 @@ harness({ title: "P-OL3 Admin: orders, problems and actions", stories: "US-AF-2.
   { label: "Order page: history, events and named actions", apply: () => reset({ v: "order", cur: "68731204", variants: VARS }),
     notes: ["Order header with code + name + label, method, branch, buyer, seller, and what the buyer and the seller see (US-AF-2.1-03, US-BF-6.5-05, OL-A1). Cancelled orders show CancelledBy, CancelReason and the comment (OL-A5): switch to «Yandex Go · 45».",
       "History (time, from → to, who + role, source, comment) and carrier events (time, carrier, carrier code, plain sentence, «→ status» when mapped) are separate; «Вместе по времени» merges them (PRD 4.9).",
-      "Named actions only, per status and method (OL-A3; no status dropdown, no editable fields, DR-OL7 ⚑ OQ-OL12): Fargo 25 → cancel (try «демо: Fargo отказал в отмене» for M-OL13 + reason, E-OL12); seller delivery 30 → cancel and «Вернуть в обработку» (own dialog text, required comment, empty → M-OL28; buyer stays «В пути»); Fargo 26 → no cancel, «Посылка вернулась»; 35 → no cancel, «Не доставлен»; 40 and 45 → no actions. «Написать продавцу» (existing) is always there.",
+      "Named actions only, per status and method (OL-A3; no status dropdown, no editable fields, DR-OL7 ⚑ OQ-OL12): Fargo 25 → cancel (try «демо: Fargo отказал в отмене» for M-OL13 + reason, E-OL12); seller delivery 30 → cancel and «Вернуть в обработку» (own dialog text, required comment, empty → M-OL28; buyer stays «В пути»); Fargo 26 → «Посылка вернулась»; 35 → «Не доставлен»; 40 and 45 → no actions. «Написать продавцу» (existing) is always there.",
+      "When cancel is not offered, the action bar says exactly one of: «Посылка возвращается к продавцу — отменить нельзя.» (26), «Заказ у курьера — отменить нельзя.» (30), «Заказ доставлен — оформляется возврат.» (35), «Заказ завершён или отменён.» (final). Admin cancel in 30 for Fargo / Yandex Go only while «Доставка оспорена» is open.",
+      "Stale screen: tick «другой администратор уже изменил заказ» and confirm any action → M-OL33, nothing changes (E-OL13, NFR-OL2). «повторить последний запрос» shows that repeating a successful action gives no error and writes nothing twice (NFR-OL4).",
       "Cancel = M-OL9/M-OL10/M-OL11 with an optional comment ≤ 500 → 46 CancelledByAdmin (AS-OL7, X8). Corrections = M-OL27 with a required comment; empty → M-OL28 (BR-OL9). Every action lands in «Действия администраторов по заказу» and the action log (OL-A4)."],
     src: "PRD 4.2, 4.4, 4.5, 4.9, 5.3 (OL-A1, OL-A3 – OL-A5) · DR-OL7 ⚑ OQ-OL12" },
   { label: "Problem list «Проблемы с доставкой»", apply: () => reset({ v: "prob" }),
     notes: ["One admin list for every method (US-AF-2.1-03, OL-A2, OL6): order, method, problem, since when and for how long, seller; oldest first; filters by method and problem type.",
-      "One row of each type of PRD 4.6: 24 / 60 / 55 Fargo («Отправить заново», cancel), 60 Yandex Go and «не забронирован» (cancel only; re-booking stays with the seller, YG-S10), seller delivery 24 «Не удалось доставить» («Разрешить новую попытку» from the Seller delivery PRD, cancel) and «Просрочен» (cancel), 26 returning («Посылка вернулась», no cancel), unknown status ⚑ and partly delivered ⚑ («Решено» only), delivery disputed («Отметить доставленным», cancel).",
-      "Every row has «Решено» (M-OL36, required comment, no status change) and «Открыть заказ». A row leaves the list when the order moves on, is cancelled or is resolved."],
+      "12 rows, one of each type of PRD 4.6: 24 / 60 / 55 Fargo («Отправить заново», cancel), 55 and 60 Yandex Go and «не забронирован» (cancel only; re-booking stays with the seller, YG-S10), seller delivery 24 «Не удалось доставить» («Разрешить новую попытку» from the Seller delivery PRD, cancel) and «Просрочен» (cancel), 26 returning («Посылка вернулась», no cancel), unknown status ⚑ and partly delivered ⚑ («Решено» only), delivery disputed («Отметить доставленным», cancel).",
+      "Every row has «Решено» (M-OL36, required comment, no status change) and «Открыть заказ». A row leaves the list when the order moves on, is cancelled or is resolved.",
+      "«Решено» on a status-based problem (24, 26, 55, 60) closes the row but keeps the status: the buyer still sees «Проблема с доставкой», the seller keeps it in «Проблемные», and the row re-opens on the next problem event or after 24 hours in the same status (toast; the order page shows until when)."],
     src: "PRD 4.6, 5.3 (OL-A2), BR-OL15 · not designed" },
   { label: "Fargo problem: send again, cancel or resolved", apply: () => reset({ v: "prob", pf: { m: "", t: ["exc"] }, demoRefuse: false, focus: "68730122" }),
     notes: ["Filtered to «Ошибка доставки»: the Fargo row (60 FargoException) has «Отправить заново», the Yandex Go row does not (US-AF-2.1-03, PRD 4.6).",
-      "«Отправить заново» → confirmation with a required comment (PRD 4.5; empty → «Напишите комментарий.») → 25 Processing with a new FargoOrderId; the old one stays in the history and the events (open the order); the row leaves the list. Tick «демо: Fargo снова отказал» first to get 55 FargoDoesNotAcceptOrder instead: the row stays with «Служба доставки не приняла заказ».",
+      "For 24 and 60, «Отправить заново» first cancels the previous Fargo booking; tick «Fargo не отменил прежнюю доставку» to get «Fargo не отменил прежнюю доставку: курьер уже в пути» — nothing booked, order unchanged. For 55 there is nothing to cancel.",
+      "«Отправить заново» → confirmation with a required comment (PRD 4.5; empty → «Напишите комментарий.») → 25 Processing with a new FargoOrderId; the old one stays in the history and the events (open the order); the row leaves the list. Tick «Fargo снова отказал» first to get 55 FargoDoesNotAcceptOrder instead: the row stays with «Служба доставки не приняла заказ».",
       "«Отменить заказ» (optional comment) → 46 CancelledByAdmin, row removed (X8). «Решено» needs a comment (M-OL36), closes the row, status unchanged.",
       "⚑ OQ-OL42: who pays when the new Fargo price is higher than what the buyer paid is open (proposed: the seller). The screen only says the buyer does not pay more."],
     src: "PRD 4.5, 4.6 · ⚑ OQ-OL42" },
@@ -450,7 +480,7 @@ harness({ title: "P-OL3 Admin: orders, problems and actions", stories: "US-AF-2.
       "«Решено» on the partly-delivered row resumes completion: the order completes at the later of the original due time (29.10.2026 23:59) and the closing time (PRD 4.7, ⚑ OQ-OL29). The buyer may still request a return."],
     src: "PRD 4.6, 4.7, 4.9 · ⚑ OQ-OL9, OQ-OL31" },
   { label: "Returning parcel: «Посылка вернулась» (26 → 50)", apply: () => reset({ v: "order", cur: "68729340" }),
-    notes: ["26 ReturnInProgress (Fargo): there is no cancel button; the hint under the action bar says why (US-AF-2.1-03, PRD 4.4, AS-OL7).",
+    notes: ["26 ReturnInProgress (Fargo): no cancel button; the action bar says «Посылка возвращается к продавцу — отменить нельзя.» (US-AF-2.1-03, PRD 4.4, AS-OL7).",
       "«Посылка вернулась» opens the correction dialog M-OL27 with a required comment (empty → M-OL28) → 50 Refunded, final; CancelledBy = Система, CancelReason ReturnedToSender (PRD 11); the history row has Source «Корректировка» and the admin's name.",
       "The refund to the buyer follows the Returns and refunds PRD; this prototype does not show the money side."],
     src: "PRD 4.4, 4.5, 4.6" },
@@ -460,7 +490,7 @@ harness({ title: "P-OL3 Admin: orders, problems and actions", stories: "US-AF-2.
       "Cancel in 30 for a Yandex Go order is offered only on this problem (PRD 4.6), although 4.4 allows the admin to cancel in 30 only for seller delivery."],
     src: "PRD 4.5, 4.6, 13.1" },
   { label: "Admin action log", apply: () => reset({ v: "log" }),
-    notes: ["Log of admin actions on orders (US-AF-2.1-03, OL-A4, BR-OL14): time, admin, order, action, status from → to, comment; filters by admin and by action.",
+    notes: ["Log of admin actions on orders (US-AF-2.1-03, OL-A4, BR-OL14): time, admin, order, action, status from → to, comment; filters by admin, by action and by date (from – to, both inclusive).",
       "Example entries cover every action of the scenarios above (cancel, send again, back to processing, parcel returned, not delivered, mark delivered, allow a new attempt, resolved, message to the seller). Actions you take in the other scenarios are added on top, marked «в этой сессии».",
       "Entries are read-only. The same entries appear on the order page under «Действия администраторов по заказу»."],
     src: "PRD 5.3 (OL-A4), 9 (BR-OL14) · not designed" },

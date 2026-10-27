@@ -59,3 +59,6 @@
 .o3m .fl{font-size:13px;font-weight:500;margin:12px 0 6px;display:block}
 .o3m .box3{background:#f6f7f9;border-radius:10px;padding:10px 12px;font-size:13px;margin-top:10px}
 .o3m .alert{margin-top:12px}
+.o3 .why3{color:var(--ink-2);font-size:13px;background:#f1f2f4;border-radius:8px;padding:6px 10px}
+.o3 .dr3{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.o3 .dr3 .inp{width:auto;padding:7px 8px}
