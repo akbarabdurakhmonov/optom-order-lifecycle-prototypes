@@ -1,0 +1,54 @@
+/* ---- P-OL1 cart and checkout ---- */
+.cartg{border:1px solid var(--line);border-radius:14px;padding:0 16px 4px;margin-bottom:16px;background:#fff}
+.cartg .sh{display:flex;align-items:center;gap:10px;padding:14px 0 10px;font-weight:600;font-size:16px}
+.cartg .sh svg{width:20px;height:20px;stroke:var(--muted);fill:none;stroke-width:1.6}
+.cartg .bh2{display:flex;align-items:center;gap:8px;padding:8px 12px;margin:2px 0 4px;background:#f6f7f9;border-radius:10px;font-size:13px;color:var(--ink-2)}
+.cartg .bh2 svg{width:16px;height:16px;stroke:var(--muted);fill:none;stroke-width:1.6}
+.cline{display:grid;grid-template-columns:22px 64px 1fr 120px 140px;gap:14px;align-items:center;padding:14px 0;border-top:1px solid var(--line)}
+.cartg .bh2+.cline{border-top:none}
+.cline input[type=checkbox]{width:18px;height:18px;accent-color:var(--green);cursor:pointer}
+.cline .pimg{width:64px;height:64px;border-radius:10px;background:linear-gradient(135deg,#eef0ec,#d9dfd6)}
+.cline .pn{font-weight:500}
+.ship{font-size:13px;color:var(--ink-2);display:flex;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap}
+.ship svg{width:15px;height:15px;stroke:var(--muted);fill:none;stroke-width:1.6}
+.ship .chg{color:var(--green);cursor:pointer;font-weight:500;margin-left:4px}
+.near{display:inline-block;font-size:11.5px;border-radius:10px;padding:1px 8px;background:#eef1f6;color:#3b4a63;font-weight:600}
+.qty{display:inline-flex;align-items:center;border:1px solid var(--line-2);border-radius:9px;overflow:hidden}
+.qty span{padding:5px 10px;color:var(--muted)}
+.qty b{white-space:nowrap;padding:5px 10px;font-weight:600;border-left:1px solid var(--line);border-right:1px solid var(--line)}
+.ltot{text-align:right;font-weight:600;font-size:15px}
+.mtile{border:1.5px solid var(--line-2);border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center;cursor:pointer;background:#fff;margin-top:10px}
+.mtile.on{border-color:var(--green);background:var(--green-50)}
+.mtile .r{width:18px;height:18px;border-radius:50%;border:2px solid var(--line-2);flex:none}
+.mtile.on .r{border:5px solid var(--green)}
+.mtile.off{background:#f6f7f9;cursor:not-allowed;color:var(--muted)}
+.mtile.off .r{background:#eceef1}
+.mtile .mic{width:22px;height:22px;stroke:var(--ink-2);fill:none;stroke-width:1.6;flex:none}
+.mtile.off .mic{stroke:var(--muted)}
+.mtile .why{color:var(--red);font-size:13px;margin-top:2px}
+.mtile .mp{font-weight:600;white-space:nowrap;text-align:right}
+.mtile .mp s{display:block;color:var(--muted);font-weight:400;font-size:12px}
+.mtile.off .yglogo,.mtile.off span[style]{opacity:.55}
+.demo-line{border:1px dashed #b8bdc4;background:#fbfbfc;border-radius:10px;padding:8px 12px;font-size:12.5px;color:#555b63;margin-top:12px}
+.demo-sw{display:flex;align-items:center;gap:10px;font-size:12.5px;color:#555b63;border:1px dashed #b8bdc4;background:#fbfbfc;border-radius:10px;padding:8px 12px;margin-top:12px;cursor:pointer}
+.backl{color:var(--green);cursor:pointer;font-weight:500;font-size:13px}
+.pay-pg{min-height:100vh;background:#eef1f5;display:flex;align-items:flex-start;justify-content:center;padding:50px 20px}
+.pay-card{width:460px;background:#fff;border-radius:18px;box-shadow:0 10px 30px rgba(16,24,40,.08);padding:26px 28px}
+.pay-logo{font-weight:800;font-size:24px;letter-spacing:-.5px;color:#1f3d8a}
+.pay-logo i{color:#24b47e;font-style:normal}
+.cd{font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+.cd.low{color:var(--red)}
+.phones{display:flex;gap:18px;justify-content:center;padding:18px 0 30px}
+.phones .pcol{display:flex;flex-direction:column;align-items:center;gap:8px}
+.phones .cap{font-size:12.5px;color:#555b63;font-weight:500}
+.phones .phonewrap{padding:0}
+.phones .phone{width:372px;min-height:760px}
+.phone .mline{display:grid;grid-template-columns:20px 48px 1fr;gap:10px;padding:12px 0;border-top:1px solid var(--line)}
+.phone .mline .pimg{width:48px;height:48px;border-radius:9px;background:linear-gradient(135deg,#eef0ec,#d9dfd6)}
+.phone .mline input{width:18px;height:18px;accent-color:var(--green);margin-top:14px}
+.phone .ship{font-size:12.5px}
+.phone .dim{position:absolute;inset:0;background:rgba(16,18,22,.45);z-index:4}
+.phone .sheet .bl{padding:11px 2px}
+.phone .botbar{position:absolute;left:0;right:0;bottom:54px;background:#fff;border-top:1px solid var(--line);padding:10px 14px}
+.phone .mtile{padding:10px 12px;margin-top:8px}
+.phone .alert{padding:10px 12px;font-size:12.5px}

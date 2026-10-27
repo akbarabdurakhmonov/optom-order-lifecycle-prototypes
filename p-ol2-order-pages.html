@@ -1,0 +1,987 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>P-OL2 Order pages: buyer and seller</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>/* Optom.uz prototype base — colours and components taken from the Figma exports (Seller website, Buyer website, Super Admin Old) */
+:root{
+  --green:#00a028; --green-600:#008a22; --green-50:#e6f6ea; --green-100:#cdeed5;
+  --ink:#1b1c1f; --ink-2:#38383b; --muted:#6b7079; --muted-2:#8b9189; --line:#e7e9ec; --line-2:#d9dce1;
+  --bg:#f3f4f6; --card:#ffffff; --red:#d92d20; --red-50:#fdecec; --amber:#ca8504; --amber-50:#fef7c3;
+  --blue:#0c75ed; --blue-50:#e8f2fe; --violet:#7a5af8; --violet-50:#f1edff;
+  --radius:12px; --radius-sm:8px;
+  --font:"Onest",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:var(--font);font-size:14px;line-height:1.45;color:var(--ink);background:var(--bg)}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--green);text-decoration:none}
+/* ---- prototype harness bar ---- */
+.pbar{position:sticky;top:0;z-index:50;display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:8px 16px;background:#14161a;color:#e9ecef;font-size:12.5px}
+.pbar b{color:#fff;font-weight:600}
+.pbar .tag{background:#2a2e35;border-radius:6px;padding:2px 8px;color:#c6cbd2}
+.pbar select{background:#23272e;border:1px solid #3a3f47;border-radius:6px;color:#fff;padding:4px 8px;max-width:420px}
+.pbar .sp{flex:1}
+.pbar button{background:#23272e;border:1px solid #3a3f47;border-radius:6px;color:#fff;padding:4px 10px;cursor:pointer}
+.pbar button.on{background:var(--green);border-color:var(--green)}
+.notes{position:fixed;right:16px;bottom:16px;width:380px;max-height:60vh;overflow:auto;z-index:60;background:#fffef5;border:1px solid #eadf9f;border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.18);padding:14px 16px;font-size:12.5px;display:none}
+.notes.show{display:block}
+.notes h4{margin:0 0 6px;font-size:13px}
+.notes ul{margin:4px 0 0 16px;padding:0}
+.notes li{margin:3px 0}
+.notes .src{color:#6b6200;font-size:11.5px;margin-top:8px}
+/* ---- seller / admin shell ---- */
+.shell{display:grid;grid-template-columns:232px 1fr;min-height:calc(100vh - 40px)}
+.side{padding:18px 14px;display:flex;flex-direction:column;gap:2px}
+.logo{display:flex;align-items:center;gap:8px;font-weight:600;font-size:26px;letter-spacing:-.5px;margin:0 6px 22px;color:var(--ink)}
+.logo svg{flex:none}
+.side .grp{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;margin:14px 10px 6px}
+.nav{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;color:var(--ink-2);cursor:default}
+.nav.on{background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.05);color:var(--ink);font-weight:500}
+.nav svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.6;opacity:.8}
+.side .me{margin-top:auto;background:#fff;border-radius:12px;padding:10px;display:flex;gap:10px;align-items:center}
+.ava{width:34px;height:34px;border-radius:50%;background:#d7dbe0;display:grid;place-items:center;font-weight:600;color:#555;flex:none}
+.me small{display:block;color:var(--green);font-size:12px}
+.main{padding:16px 24px 40px 8px;min-width:0}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.iconbtn{width:34px;height:34px;border-radius:9px;background:#fff;border:1px solid var(--line);display:grid;place-items:center}
+.crumbs{color:var(--muted);font-size:13px;display:flex;gap:8px;align-items:center}
+.crumbs b{color:var(--ink);font-weight:500}
+.top .sp{flex:1}
+.lang{background:#fff;border:1px solid var(--line);border-radius:9px;padding:6px 12px;font-size:13px}
+.h1{font-size:26px;font-weight:600;margin:6px 0 14px;display:flex;align-items:center;gap:10px}
+/* ---- components ---- */
+.card{background:var(--card);border-radius:var(--radius);padding:20px 22px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+.card+.card{margin-top:12px}
+.card h3{margin:0 0 4px;font-size:18px;font-weight:600}
+.sub{color:var(--muted);margin:0}
+.row{display:flex;gap:12px;align-items:center}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.sec{display:grid;grid-template-columns:240px 1fr;gap:24px;padding:20px 0;border-top:1px solid var(--line)}
+.sec>.lbl{font-weight:600}
+.sec>.lbl .sub{font-weight:400;font-size:13px;margin-top:4px}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.field label{font-size:13px;font-weight:500}
+.inp{border:1px solid var(--line-2);border-radius:10px;padding:10px 12px;background:#fff;outline:none;width:100%}
+.inp:focus{border-color:var(--green);box-shadow:0 0 0 3px var(--green-50)}
+.inp.err{border-color:var(--red)}
+.inp[disabled]{background:#f6f7f9;color:var(--muted)}
+.err-t{color:var(--red);font-size:12.5px}
+.hint{color:var(--muted);font-size:12.5px}
+.btn{border:1px solid transparent;border-radius:10px;padding:10px 18px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+.btn.pri{background:var(--green);color:#fff}
+.btn.pri:hover{background:var(--green-600)}
+.btn.pri[disabled]{background:#9fd8ad;cursor:not-allowed}
+.btn.out{background:#fff;border-color:var(--line-2);color:var(--ink)}
+.btn.soft{background:var(--green-50);color:var(--green)}
+.btn.dan{background:var(--red-50);color:var(--red)}
+.btn.danfill{background:var(--red);color:#fff}
+.btn.link{background:none;padding:6px 4px;color:var(--green)}
+.btn.sm{padding:6px 12px;font-size:13px;border-radius:8px}
+.btn[disabled]{opacity:.55;cursor:not-allowed}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:8px;padding:3px 9px;font-size:12.5px;font-weight:500;border:1px solid transparent}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.pill.g{background:var(--green-50);color:var(--green);border-color:var(--green-100)}
+.pill.v{background:var(--violet-50);color:var(--violet);border-color:#ddd3ff}
+.pill.a{background:#fff6e0;color:#b54708;border-color:#fde7b0}
+.pill.r{background:var(--red-50);color:var(--red);border-color:#f9c9c4}
+.pill.n{background:#f1f2f4;color:var(--ink-2);border-color:var(--line)}
+.pill.b{background:var(--blue-50);color:var(--blue);border-color:#c9e0fd}
+.alert{border-radius:12px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start;border-left:4px solid}
+.alert .ic{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:13px;flex:none}
+.alert.w{background:var(--amber-50);border-color:var(--amber)} .alert.w .ic{background:var(--amber)}
+.alert.e{background:var(--red-50);border-color:var(--red)} .alert.e .ic{background:var(--red)}
+.alert.i{background:var(--blue-50);border-color:var(--blue)} .alert.i .ic{background:var(--blue)}
+.alert.s{background:var(--green-50);border-color:var(--green)} .alert.s .ic{background:var(--green)}
+.alert b{display:block;margin-bottom:2px}
+.toggle{position:relative;width:40px;height:22px;border-radius:12px;background:#d0d4da;border:none;cursor:pointer;flex:none;transition:.15s}
+.toggle::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.15s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.toggle.on{background:var(--green)}
+.toggle.on::after{left:21px}
+.toggle[disabled]{opacity:.45;cursor:not-allowed}
+.chk{display:flex;gap:10px;align-items:flex-start;cursor:pointer;margin:8px 0}
+.chk input{width:18px;height:18px;accent-color:var(--green);margin-top:2px;flex:none}
+table.t{width:100%;border-collapse:collapse}
+table.t th{background:#f6f7f9;text-align:left;font-size:12.5px;font-weight:500;color:var(--muted);padding:10px 12px}
+table.t td{border-top:1px solid var(--line);padding:12px;vertical-align:middle}
+.kv{display:flex;gap:10px;padding:12px 0;border-top:1px solid var(--line);align-items:flex-start}
+.kv:first-of-type{border-top:none}
+.kv .k{color:var(--muted)}
+.kv svg{width:20px;height:20px;stroke:var(--muted);fill:none;stroke-width:1.6;flex:none;margin-top:1px}
+.modal-bg{position:fixed;inset:0;background:rgba(16,18,22,.45);display:grid;place-items:center;z-index:40;padding:20px}
+.modal{background:#fff;border-radius:16px;width:min(560px,100%);max-height:90vh;overflow:auto;padding:22px 24px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.modal h3{margin:0 0 6px;font-size:19px}
+.modal .acts{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1b1c1f;color:#fff;border-radius:10px;padding:10px 16px;z-index:70;box-shadow:0 10px 30px rgba(0,0,0,.25);font-size:13.5px}
+.digits{display:flex;gap:6px;align-items:flex-end}
+.digit{background:#eceef1;border-radius:10px;width:42px;height:52px;display:grid;place-items:center;font-size:24px;font-weight:600}
+.dsep{font-size:24px;font-weight:600;padding:0 4px 12px}
+.ycard{border:1.5px solid var(--line-2);border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center;cursor:pointer;background:#fff}
+.ycard.on{border-color:var(--green);background:var(--green-50)}
+.ycard .r{width:18px;height:18px;border-radius:50%;border:2px solid var(--line-2);flex:none}
+.ycard.on .r{border:5px solid var(--green)}
+.ycard[aria-disabled=true]{opacity:.5;cursor:not-allowed}
+.yglogo{font-weight:700;letter-spacing:-.3px}
+.yglogo i{font-style:italic;font-weight:800}
+.code-big{font-size:30px;letter-spacing:6px;font-weight:700;background:#f6f7f9;border-radius:10px;padding:8px 14px;display:inline-block}
+.steps{display:flex;justify-content:space-between;position:relative;margin:6px 0 4px}
+.steps::before{content:"";position:absolute;left:20px;right:20px;top:17px;height:2px;background:var(--line)}
+.step{position:relative;text-align:center;flex:1;color:var(--muted);font-size:13px}
+.step .dot{width:36px;height:36px;border-radius:10px;margin:0 auto 6px;background:#fff;border:1.5px solid var(--line-2);display:grid;place-items:center}
+.step.on{color:var(--green);font-weight:500}
+.step.on .dot{background:var(--green-50);border-color:var(--green)}
+.timeline .it{display:flex;gap:12px;padding:8px 0}
+.timeline .it .d{width:30px;height:30px;border-radius:50%;background:#f1f2f4;display:grid;place-items:center;flex:none;font-size:13px}
+.timeline .it small{display:block;color:var(--muted)}
+.muted{color:var(--muted)}
+.small{font-size:12.5px}
+.mt8{margin-top:8px}.mt12{margin-top:12px}.mt16{margin-top:16px}.mb0{margin-bottom:0}
+.spin{width:16px;height:16px;border:2px solid #c8ead1;border-top-color:var(--green);border-radius:50%;animation:sp 0.8s linear infinite;display:inline-block}
+@keyframes sp{to{transform:rotate(360deg)}}
+.ann{outline:2px dashed #f0b400;outline-offset:3px;border-radius:12px}
+
+:root{--blue:#0c75ed;--ab:#eef5f7}
+body{background:var(--ab)}
+.ash{display:grid;grid-template-columns:232px 1fr;min-height:calc(100vh - 44px)}
+.aside{background:#fff;padding:22px 16px}
+.aside .logo{font-size:27px;margin:0 0 28px 12px}
+.anav{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;font-weight:500;color:#1b1c1f;cursor:default;margin-bottom:4px}
+.anav svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6}
+.anav.on{background:var(--blue);color:#fff}
+.anav .ch{margin-left:auto;font-size:11px;opacity:.6}
+.asub{padding:8px 14px 8px 48px;border-radius:8px;color:#4b5563;font-size:14px;margin-bottom:2px;cursor:pointer}
+.asub.on{background:#e8f1fd;color:var(--blue);font-weight:500}
+.atop{display:flex;justify-content:flex-end;gap:12px;align-items:center;padding:16px 28px;background:#fff}
+.abox{border:1px solid var(--line);border-radius:10px;padding:8px 12px;display:flex;gap:8px;align-items:center;background:#fff}
+.abox select{border:none;font:inherit;background:transparent;font-weight:500;outline:none}
+.apanel{background:#fff;border-radius:14px;margin:24px 28px;padding:24px 26px}
+.apanel h1{font-size:24px;margin:0 0 18px;font-weight:600;display:flex;align-items:center;gap:12px}
+.apanel h1 .btn{font-size:14px}
+.back{width:30px;height:30px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#555;cursor:pointer}
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);margin-bottom:18px}
+.tab{padding:10px 14px;cursor:pointer;color:var(--muted);font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab.on{color:var(--ink);border-bottom-color:var(--green)}
+.tab .cnt{background:#fde8e7;color:var(--red);border-radius:10px;padding:1px 7px;font-size:12px;margin-left:6px}
+.flt{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.flt .s{display:flex;flex:1;min-width:260px;border:1px solid var(--green);border-radius:10px;overflow:hidden}
+.flt .s input{flex:1;border:none;padding:9px 12px;outline:none;font:inherit}
+.flt .s button{background:var(--green);color:#fff;border:none;padding:0 18px;font-weight:600;font:inherit}
+.gsel{background:#f2f3f5;border:none;border-radius:10px;padding:9px 12px;font:inherit;min-width:190px}
+.chip{display:inline-block;border-radius:5px;padding:2px 8px;font-size:12px;color:#fff;font-weight:500;white-space:nowrap}
+.c-blue{background:#1d5fd1}.c-or{background:#f0a020}.c-pur{background:#7a29e0}.c-cy{background:#16a3d9}.c-gr{background:#1fa83c}.c-red{background:#d92d20}.c-gray{background:#5f6368}
+.go{width:30px;height:30px;border-radius:50%;background:#e6f6ea;color:var(--green);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-weight:700}
+.gin{background:#f2f3f5;border-radius:10px;padding:10px 12px;color:#4b5563;min-height:40px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.att{border:1px solid var(--line);border-radius:12px;margin-top:12px;overflow:hidden}
+.att .hd{display:flex;align-items:center;gap:10px;padding:12px 16px;background:#fafbfc;border-bottom:1px solid var(--line)}
+.att .bd{padding:14px 16px}
+.prices{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}
+.pr{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.pr small{display:block;color:var(--muted);font-size:12px}
+.pr b{font-size:17px;font-weight:600}
+.pr.hl{border-color:#f5c26b;background:#fffaf0}
+.dl{display:grid;grid-template-columns:repeat(3,1fr);gap:6px 18px;font-size:13.5px}
+.dl div span{color:var(--muted)}
+.log{background:#0f1720;color:#d6e2ee;border-radius:10px;padding:12px;font:12px/1.5 ui-monospace,Menlo,monospace;max-height:340px;overflow:auto;white-space:pre-wrap}
+.log .m{color:#7dd3fc}.log .ok{color:#86efac}.log .bad{color:#fca5a5}
+.swrow{display:flex;align-items:flex-start;gap:16px;padding:16px 0;border-bottom:1px solid var(--line)}
+.swrow .tx{flex:1}
+.mono{font-family:ui-monospace,Menlo,monospace;font-size:12.5px}
+.ro-note{font-size:12.5px;color:var(--muted);background:#f6f7f9;border-radius:8px;padding:6px 10px;display:inline-block}
+.radio-l{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:8px;cursor:pointer}
+.radio-l.on{border-color:var(--green);background:var(--green-50)}
+textarea.inp{min-height:76px;resize:vertical}
+
+.og{display:grid;grid-template-columns:1fr 330px;gap:12px;align-items:start}
+.prod{display:flex;align-items:center;gap:12px}
+.thumb{width:40px;height:40px;border-radius:8px;background:linear-gradient(135deg,#e8d8d8,#c9b3b3)}
+.price-line{background:#f6f7f9;border-radius:10px;padding:10px 12px;margin-top:12px;font-size:13.5px}
+.price-line b{font-weight:600}
+.preset{border:1.5px solid var(--line-2);border-radius:10px;padding:10px 12px;cursor:pointer;display:flex;gap:10px;align-items:center}
+.preset.on{border-color:var(--green);background:var(--green-50)}
+.preset .r{width:16px;height:16px;border-radius:50%;border:2px solid var(--line-2);flex:none}
+.preset.on .r{border:5px solid var(--green)}
+.presets{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.courier{display:flex;gap:14px;align-items:center;background:#f6f7f9;border-radius:12px;padding:12px 14px}
+.cnt{font-variant-numeric:tabular-nums;font-weight:600}
+
+.buyer{background:#fff;min-height:100vh}
+.strip{background:#1b1c1f;color:#e9ecef;font-size:13px;display:flex;justify-content:space-between;padding:10px 7%}
+.strip span+span{margin-left:28px}
+.bh{display:flex;align-items:center;gap:18px;padding:14px 7%;border-bottom:1px solid var(--line)}
+.bh .logo{margin:0;font-size:30px}
+.srch{flex:1;display:flex;border:2px solid var(--green);border-radius:10px;overflow:hidden}
+.srch input{flex:1;border:none;padding:9px 12px;outline:none}
+.srch button{background:var(--green);color:#fff;border:none;padding:0 20px;font-weight:600}
+.wrapb{padding:24px 7% 60px}
+.cg{display:grid;grid-template-columns:1fr 330px;gap:40px;align-items:start}
+.blk{margin-bottom:26px}
+.blk h2{font-size:19px;margin:0 0 4px;font-weight:600}
+.box{border:1px solid var(--line);border-radius:14px;padding:4px 16px}
+.opt{display:flex;gap:12px;align-items:center;padding:14px 0}
+.opt+.opt{border-top:1px solid var(--line)}
+.radio{width:18px;height:18px;border-radius:50%;border:2px solid var(--line-2);flex:none}
+.radio.on{border:5px solid var(--green)}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
+.tile{border:1px solid var(--line-2);border-radius:12px;padding:14px;height:84px;display:flex;flex-direction:column;justify-content:space-between;cursor:pointer;background:#fff}
+.tile.on{border-color:var(--green);background:var(--green-50)}
+.tile .lg{font-size:17px}
+.sumc{border-radius:16px;box-shadow:0 2px 12px rgba(16,24,40,.08);padding:20px 22px}
+.sumc .ln{display:flex;justify-content:space-between;margin:7px 0;color:var(--muted)}
+.sumc .ln b{color:var(--ink);font-weight:600}
+.sumc .tot{display:flex;justify-content:space-between;border-top:1px solid var(--line);padding-top:14px;margin-top:12px;font-size:18px;font-weight:600}
+.big{width:100%;justify-content:center;padding:15px;font-size:16px;border-radius:12px;margin-top:16px}
+.ygopts{display:grid;gap:8px;margin-top:12px}
+.valid{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);margin-top:10px}
+.demo{background:#fff3c4;border:1px dashed #d9b400;color:#6b5600;border-radius:6px;padding:2px 8px;font-size:11.5px;cursor:pointer}
+.adr{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.oc{display:grid;grid-template-columns:1fr 330px;gap:40px;align-items:start}
+.track{border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-top:14px}
+/* ---- seller-delivery additions ---- */
+.phonewrap{display:flex;justify-content:center;padding:24px 0 40px}
+.phone{width:390px;min-height:780px;border:11px solid #15171a;border-radius:44px;background:#f3f4f6;overflow:hidden;position:relative;box-shadow:0 20px 50px rgba(0,0,0,.18)}
+.phone .sb{height:34px;display:flex;justify-content:space-between;align-items:center;padding:0 22px;font-size:13px;font-weight:600;background:#fff}
+.phone .ah{background:#fff;padding:10px 16px 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line)}
+.phone .ah b{font-size:17px}
+.phone .pc{padding:12px}
+.phone .card{padding:14px 14px;border-radius:14px}
+.phone .btn{padding:11px 14px}
+.phone .tabbar{position:absolute;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:8px 0 14px;font-size:11px;color:var(--muted)}
+.phone .tabbar .on{color:var(--green);font-weight:600}
+.phone .sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:20px 20px 0 0;padding:18px 16px 26px;box-shadow:0 -10px 30px rgba(0,0,0,.15);z-index:5}
+.cityrow{display:grid;grid-template-columns:1fr 200px 34px;gap:8px;align-items:center;margin-top:8px}
+.brblock{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:10px}
+.brblock.on{border-color:var(--green-100);background:#fbfefb}
+.x{width:34px;height:38px;border-radius:9px;border:1px solid var(--line-2);background:#fff;cursor:pointer;color:var(--muted)}
+.counter{float:right;color:var(--muted);font-size:12px}
+.sdcard{border:1.5px solid var(--line-2);border-radius:12px;padding:14px;display:flex;gap:12px;align-items:flex-start;cursor:pointer;background:#fff;margin-top:12px}
+.sdcard.on{border-color:var(--green);background:var(--green-50)}
+.sdcard.off{background:#f6f7f9;cursor:not-allowed;color:var(--muted)}
+.sdcard .r{width:18px;height:18px;border-radius:50%;border:2px solid var(--line-2);flex:none;margin-top:2px}
+.sdcard.on .r{border:5px solid var(--green)}
+.sdcard .why{color:var(--red);font-size:13px;margin-top:4px}
+.info{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:#eceef1;color:var(--ink-2);font-size:11px;font-weight:700;cursor:pointer;margin-left:6px;vertical-align:middle}
+.tip{background:#1b1c1f;color:#fff;border-radius:10px;padding:10px 12px;font-size:12.5px;margin-top:8px;max-width:420px}
+.codebox{display:flex;gap:8px;justify-content:center;margin:14px 0}
+.codebox input{width:52px;height:60px;text-align:center;font-size:26px;font-weight:600;border:1.5px solid var(--line-2);border-radius:12px;outline:none}
+.codebox input:focus{border-color:var(--green)}
+.overdue{color:var(--red);font-weight:600}
+.dflt{border:1px solid var(--line);border-radius:14px;padding:16px;background:#fff}
+.dflt h4{margin:14px 0 8px;font-size:15px}
+.dflt h4:first-child{margin-top:0}
+.fopt{display:flex;align-items:center;gap:10px;padding:6px 0;cursor:pointer}
+.fopt .radio{width:18px;height:18px}
+.chipf{display:inline-block;border:1px solid var(--line);border-radius:18px;padding:5px 12px;margin:0 6px 6px 0;font-size:13px;background:#f6f7f9}
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.pcard{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px}
+.pcard .img{height:120px;border-radius:10px;background:linear-gradient(135deg,#eef0ec,#d9dfd6);margin-bottom:8px}
+.pcard .pr{font-weight:700;font-size:16px}
+.ptag{display:inline-block;font-size:11.5px;border-radius:6px;padding:2px 7px;background:#f1f2f4;color:var(--ink-2);margin-top:6px}
+.empty{text-align:center;color:var(--muted);padding:50px 0}
+.addrpick{position:fixed;inset:0;background:rgba(16,18,22,.45);display:grid;place-items:center;z-index:45}
+.reasons label{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:8px;cursor:pointer}
+.reasons label.on{border-color:var(--green);background:var(--green-50)}
+.notif{background:#fff;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.15);padding:12px 14px;display:flex;gap:10px;max-width:360px}
+.notif .ic2{width:36px;height:36px;border-radius:10px;background:var(--green);color:#fff;display:grid;place-items:center;font-weight:700;flex:none}
+/* ---- pickup additions ---- */
+.qr{display:block;background:#fff;padding:10px;border-radius:12px;border:1px solid var(--line)}
+.qrwrap{display:flex;gap:22px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.hcode{font-size:34px;font-weight:700;letter-spacing:6px;font-variant-numeric:tabular-nums}
+.brcard{border:1.5px solid var(--green);background:var(--green-50);border-radius:14px;padding:14px 16px;margin-top:12px}
+.brcard .nm{font-weight:600;font-size:16px}
+.badge{display:inline-block;font-size:12px;border-radius:12px;padding:2px 9px;margin-left:8px;vertical-align:middle;background:#e7f6ea;color:#0c7a2a;font-weight:600}
+.badge.n{background:#eef1f6;color:#3b4a63}
+.hrs{display:grid;grid-template-columns:110px 120px 1fr;gap:6px 12px;align-items:center;margin-top:8px}
+.hrs .d{font-weight:500}
+.hrs select{max-width:110px}
+.hrow-err{grid-column:1/-1;color:var(--red);font-size:12.5px;margin:-2px 0 4px}
+.blist .bl{display:grid;grid-template-columns:1fr auto;gap:4px 12px;padding:12px 4px;border-bottom:1px solid var(--line);cursor:pointer}
+.blist .bl:hover{background:#fafbfa}
+.blist .bl.dis{cursor:not-allowed;color:var(--muted)}
+.blist .bl .why{color:var(--red);font-size:12.5px}
+.blist .bl.sel{background:var(--green-50)}
+.ptabs{display:flex;background:#f1f2f4;border-radius:10px;padding:3px;gap:3px;margin:10px 0}
+.ptabs span{flex:1;text-align:center;padding:7px;border-radius:8px;cursor:pointer;font-weight:500}
+.ptabs span.on{background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.map{position:relative;height:360px;border-radius:12px;overflow:hidden;background:#eef2e8;background-image:linear-gradient(90deg,rgba(255,255,255,.9) 6px,transparent 6px),linear-gradient(rgba(255,255,255,.9) 6px,transparent 6px),linear-gradient(35deg,transparent 48%,rgba(255,255,255,.95) 48%,rgba(255,255,255,.95) 52%,transparent 52%);background-size:90px 90px,90px 90px,100% 100%}
+.map .river{position:absolute;left:-10%;top:58%;width:120%;height:22px;background:#cfe3f5;transform:rotate(-8deg)}
+.map .pinm{position:absolute;transform:translate(-50%,-100%);cursor:pointer;text-align:center}
+.map .pinm svg{width:34px;height:34px;fill:var(--green);stroke:#fff;stroke-width:1.5}
+.map .pinm.dis svg{fill:#a9adb3}
+.map .pinm.sel svg{fill:#0a6b22}
+.map .pinm small{display:block;background:#fff;border-radius:6px;padding:1px 6px;font-size:11px;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.map .me{position:absolute;width:16px;height:16px;border-radius:50%;background:#2f6fde;border:3px solid #fff;box-shadow:0 0 0 6px rgba(47,111,222,.2);transform:translate(-50%,-50%)}
+.map .mcard{position:absolute;left:12px;right:12px;bottom:12px;background:#fff;border-radius:12px;padding:12px 14px;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+.scan{background:#111;border-radius:16px;height:420px;position:relative;display:grid;place-items:center;overflow:hidden}
+.scan .vf{width:220px;height:220px;border:3px solid rgba(255,255,255,.85);border-radius:18px;box-shadow:0 0 0 2000px rgba(0,0,0,.45)}
+.scan .lbl{position:absolute;top:18px;color:#fff;font-size:13px}
+.demo-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.demo-acts button{font-size:12px;border:1px dashed #b8bdc4;background:#fbfbfc;border-radius:8px;padding:6px 9px;cursor:pointer;color:#555b63}
+.sumbox{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:10px;background:#fafbfc}
+.lock{filter:grayscale(1);opacity:.6;pointer-events:none}
+.lockscreen{background:linear-gradient(160deg,#2b3a55,#5d4b6e);min-height:700px;padding:30px 14px 20px;color:#fff}
+.lockscreen .clock{text-align:center;font-size:62px;font-weight:300;margin:10px 0 2px}
+.lockscreen .date{text-align:center;font-size:15px;opacity:.9;margin-bottom:22px}
+.push{background:rgba(255,255,255,.92);color:#1b1c1f;border-radius:16px;padding:10px 12px;margin-bottom:8px;display:flex;gap:10px}
+.push .ap{width:30px;height:30px;border-radius:8px;background:var(--green);color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px;flex:none}
+.push .tt{font-weight:600;font-size:13.5px}
+.push .tx{font-size:13px;line-height:1.35}
+.push .meta{font-size:11px;color:#6b7178;display:flex;justify-content:space-between}
+.push .acts2{display:flex;gap:6px;margin-top:6px}
+.push .acts2 span{background:#eef0f2;border-radius:8px;padding:4px 8px;font-size:12px;font-weight:500}
+.nlist{position:absolute;right:16px;top:58px;width:400px;background:#fff;border-radius:14px;box-shadow:0 16px 40px rgba(0,0,0,.18);z-index:20;overflow:hidden}
+.nlist .hd{display:flex;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);font-weight:600}
+.nlist .it{display:flex;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.nlist .it.unread{background:#f3fbf5}
+.nlist .it .dt{width:8px;height:8px;border-radius:50%;background:var(--green);margin-top:6px;flex:none}
+.nlist .it.read .dt{background:transparent}
+.bellc{position:relative}
+.bellc .cnt2{position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;border-radius:9px;font-size:10.5px;padding:0 5px;font-weight:700}
+.sms{background:#fff;min-height:700px}
+.sms .hd{padding:10px 14px;border-bottom:1px solid var(--line);text-align:center;font-weight:600}
+.sms .bub{background:#e9e9eb;border-radius:18px;padding:9px 13px;margin:10px 60px 4px 12px;font-size:14.5px;line-height:1.35}
+.sms .tm{font-size:11px;color:#8b9189;margin:0 12px}
+.lenok{color:#0c7a2a;font-weight:600}.lenbad{color:var(--red);font-weight:700}
+.langsw span{display:inline-block;border:1px solid var(--line-2);border-radius:8px;padding:4px 10px;margin-right:6px;cursor:pointer}
+.langsw span.on{background:var(--green);border-color:var(--green);color:#fff}
+.alog td{font-size:13px}
+/* ---- P-OL1 cart and checkout ---- */
+.cartg{border:1px solid var(--line);border-radius:14px;padding:0 16px 4px;margin-bottom:16px;background:#fff}
+.cartg .sh{display:flex;align-items:center;gap:10px;padding:14px 0 10px;font-weight:600;font-size:16px}
+.cartg .sh svg{width:20px;height:20px;stroke:var(--muted);fill:none;stroke-width:1.6}
+.cartg .bh2{display:flex;align-items:center;gap:8px;padding:8px 12px;margin:2px 0 4px;background:#f6f7f9;border-radius:10px;font-size:13px;color:var(--ink-2)}
+.cartg .bh2 svg{width:16px;height:16px;stroke:var(--muted);fill:none;stroke-width:1.6}
+.cline{display:grid;grid-template-columns:22px 64px 1fr 120px 140px;gap:14px;align-items:center;padding:14px 0;border-top:1px solid var(--line)}
+.cartg .bh2+.cline{border-top:none}
+.cline input[type=checkbox]{width:18px;height:18px;accent-color:var(--green);cursor:pointer}
+.cline .pimg{width:64px;height:64px;border-radius:10px;background:linear-gradient(135deg,#eef0ec,#d9dfd6)}
+.cline .pn{font-weight:500}
+.ship{font-size:13px;color:var(--ink-2);display:flex;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap}
+.ship svg{width:15px;height:15px;stroke:var(--muted);fill:none;stroke-width:1.6}
+.ship .chg{color:var(--green);cursor:pointer;font-weight:500;margin-left:4px}
+.near{display:inline-block;font-size:11.5px;border-radius:10px;padding:1px 8px;background:#eef1f6;color:#3b4a63;font-weight:600}
+.qty{display:inline-flex;align-items:center;border:1px solid var(--line-2);border-radius:9px;overflow:hidden}
+.qty span{padding:5px 10px;color:var(--muted)}
+.qty b{white-space:nowrap;padding:5px 10px;font-weight:600;border-left:1px solid var(--line);border-right:1px solid var(--line)}
+.ltot{text-align:right;font-weight:600;font-size:15px}
+.mtile{border:1.5px solid var(--line-2);border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center;cursor:pointer;background:#fff;margin-top:10px}
+.mtile.on{border-color:var(--green);background:var(--green-50)}
+.mtile .r{width:18px;height:18px;border-radius:50%;border:2px solid var(--line-2);flex:none}
+.mtile.on .r{border:5px solid var(--green)}
+.mtile.off{background:#f6f7f9;cursor:not-allowed;color:var(--muted)}
+.mtile.off .r{background:#eceef1}
+.mtile .mic{width:22px;height:22px;stroke:var(--ink-2);fill:none;stroke-width:1.6;flex:none}
+.mtile.off .mic{stroke:var(--muted)}
+.mtile .why{color:var(--red);font-size:13px;margin-top:2px}
+.mtile .mp{font-weight:600;white-space:nowrap;text-align:right}
+.mtile .mp s{display:block;color:var(--muted);font-weight:400;font-size:12px}
+.mtile.off .yglogo,.mtile.off span[style]{opacity:.55}
+.demo-line{border:1px dashed #b8bdc4;background:#fbfbfc;border-radius:10px;padding:8px 12px;font-size:12.5px;color:#555b63;margin-top:12px}
+.demo-sw{display:flex;align-items:center;gap:10px;font-size:12.5px;color:#555b63;border:1px dashed #b8bdc4;background:#fbfbfc;border-radius:10px;padding:8px 12px;margin-top:12px;cursor:pointer}
+.backl{color:var(--green);cursor:pointer;font-weight:500;font-size:13px}
+.pay-pg{min-height:100vh;background:#eef1f5;display:flex;align-items:flex-start;justify-content:center;padding:50px 20px}
+.pay-card{width:460px;background:#fff;border-radius:18px;box-shadow:0 10px 30px rgba(16,24,40,.08);padding:26px 28px}
+.pay-logo{font-weight:800;font-size:24px;letter-spacing:-.5px;color:#1f3d8a}
+.pay-logo i{color:#24b47e;font-style:normal}
+.cd{font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+.cd.low{color:var(--red)}
+.phones{display:flex;gap:18px;justify-content:center;padding:18px 0 30px}
+.phones .pcol{display:flex;flex-direction:column;align-items:center;gap:8px}
+.phones .cap{font-size:12.5px;color:#555b63;font-weight:500}
+.phones .phonewrap{padding:0}
+.phones .phone{width:372px;min-height:760px}
+.phone .mline{display:grid;grid-template-columns:20px 48px 1fr;gap:10px;padding:12px 0;border-top:1px solid var(--line)}
+.phone .mline .pimg{width:48px;height:48px;border-radius:9px;background:linear-gradient(135deg,#eef0ec,#d9dfd6)}
+.phone .mline input{width:18px;height:18px;accent-color:var(--green);margin-top:14px}
+.phone .ship{font-size:12.5px}
+.phone .dim{position:absolute;inset:0;background:rgba(16,18,22,.45);z-index:4}
+.phone .sheet .bl{padding:11px 2px}
+.phone .botbar{position:absolute;left:0;right:0;bottom:54px;background:#fff;border-top:1px solid var(--line);padding:10px 14px}
+.phone .mtile{padding:10px 12px;margin-top:8px}
+.phone .alert{padding:10px 12px;font-size:12.5px}
+/* ---- P-OL2 order pages (buyer and seller); every class starts with o2 ---- */
+.o2state{display:flex;gap:14px;align-items:flex-start;border-radius:14px;padding:14px 16px;margin:6px 0 4px;background:var(--red-50);border:1px solid #f9c9c4}
+.o2state .ic{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-weight:700;color:#fff;flex:none;background:var(--red)}
+.o2state .lbl{font-weight:600;font-size:17px;color:var(--red)}
+.o2state .tx{margin-top:4px}
+.o2state .tx div{margin-top:2px}
+.o2date{display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--ink-2)}
+.o2date svg{width:16px;height:16px;stroke:var(--muted);fill:none;stroke-width:1.6}
+.o2line{display:grid;grid-template-columns:40px 1fr auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.o2line:first-of-type{border-top:none}
+.o2tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:4px 0 14px;flex-wrap:wrap}
+.o2tab{padding:10px 12px;cursor:pointer;color:var(--muted);font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.o2tab.on{color:var(--ink);border-bottom-color:var(--green)}
+.o2tab .c{background:#eef0f2;color:var(--ink-2);border-radius:10px;padding:1px 7px;font-size:12px;margin-left:6px}
+.o2tab.on .c{background:var(--green-50);color:var(--green)}
+.o2tab .c.r{background:#fde8e7;color:var(--red)}
+tr.o2go{cursor:pointer}
+tr.o2go:hover td{background:#fafbfa}
+.o2left{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.o2left.red{color:var(--red)}
+.o2mw{position:relative;display:inline-block}
+.o2menu{position:absolute;top:calc(100% + 6px);left:0;width:360px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.14);padding:6px;z-index:10}
+.o2menu .mi{padding:9px 12px;border-radius:8px;cursor:pointer;font-weight:500}
+.o2menu .mi:hover{background:var(--green-50)}
+.o2menu .mh{padding:8px 12px;color:var(--muted);font-size:12.5px;white-space:normal}
+.o2hist .it{display:grid;grid-template-columns:128px 1fr;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.o2hist .it:first-child{border-top:none}
+.o2hist .tm{color:var(--muted);font-size:12.5px;font-variant-numeric:tabular-nums}
+.o2hist .meta{color:var(--muted);font-size:12.5px;margin-top:3px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.o2hist .cm{font-size:13px;margin-top:3px}
+.o2src{display:inline-block;font-size:11.5px;border-radius:6px;padding:1px 7px;background:#f1f2f4;color:var(--ink-2)}
+.o2src.ev{background:#eef5fe;color:#1d5fd1}
+.o2src.job{background:var(--violet-50);color:var(--violet)}
+.o2src.cor{background:#fff6e0;color:#b54708}
+.o2demo{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.o2demo button,.o2demo label{font-size:12px;border:1px dashed #b8bdc4;background:#fbfbfc;border-radius:8px;padding:6px 9px;cursor:pointer;color:#555b63;display:inline-flex;gap:6px;align-items:center}
+.o2demo button.on,.o2demo label.on{border-color:#d9b400;background:#fff3c4;color:#6b5600}
+.o2demo input{accent-color:#b58a00;margin:0}
+.o2chat{background:#f1f2f4;border-radius:12px;padding:9px 12px;margin-top:10px;font-size:13.5px}
+.o2chat small{display:block;color:var(--muted);margin-top:3px}
+.o2acts{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.phone .o2dim{position:absolute;inset:0;background:rgba(16,18,22,.45);z-index:4}
+.phone .steps .step{font-size:11px}
+.phone .steps .step .dot{width:30px;height:30px}
+.phone .steps::before{top:15px}
+.phone .o2full{width:100%;justify-content:center}
+.phone .o2state{padding:12px}
+/* P-OL3 admin: orders, problems and actions (all rules scoped to .o3 / .o3m so other pages are not affected) */
+.o3 .t3{width:100%;border-collapse:collapse;font-size:13px}
+.o3 .t3 th{background:#f6f7f9;text-align:left;font-size:12px;font-weight:500;color:var(--muted);padding:9px 10px;white-space:nowrap}
+.o3 .t3 td{border-top:1px solid var(--line);padding:10px;vertical-align:top}
+.o3 .t3 tr.hl td{background:#fffaf0}
+.o3 .t3 tr.nw td{background:#f0fbf3}
+.o3 .t3 tr.clk{cursor:pointer}
+.o3 .t3 tr.clk:hover td{background:#fafbfc}
+.o3 .stc{line-height:1.3}
+.o3 .stc b{font-weight:600}
+.o3 .stc .nm{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;color:var(--ink-2);word-break:break-word}
+.o3 .stc .pill{margin-top:4px;font-size:12px;padding:2px 8px}
+.o3 .sth{display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:500;border-radius:10px;padding:5px 12px}
+.o3 .sth .mono{font-size:14px}
+.o3 .pmark{display:inline-block;background:var(--red);color:#fff;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:600;white-space:nowrap}
+.o3 .fbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.o3 .fbar select.inp{width:auto;min-width:180px;padding:8px 10px}
+.o3 .msel{position:relative}
+.o3 .msel .bt{border:1px solid var(--line-2);border-radius:10px;padding:8px 12px;background:#fff;cursor:pointer;min-width:220px;text-align:left}
+.o3 .msel .bt.on{border-color:var(--blue);color:var(--blue)}
+.o3 .msel .pan{position:absolute;top:42px;left:0;z-index:20;background:#fff;border:1px solid var(--line-2);border-radius:12px;box-shadow:0 12px 30px rgba(16,24,40,.16);padding:8px;width:470px;max-height:470px;overflow:auto}
+.o3 .msel .pan label{display:flex;gap:8px;padding:5px 8px;border-radius:8px;cursor:pointer;align-items:center;font-size:13px}
+.o3 .msel .pan label:hover{background:#f6f7f9}
+.o3 .msel .pan input{accent-color:var(--blue);width:16px;height:16px;flex:none}
+.o3 .msel .pan .grp{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:8px 8px 2px}
+.o3 .msel .pan .ft{display:flex;justify-content:space-between;border-top:1px solid var(--line);margin-top:6px;padding-top:6px}
+.o3 .chipt{border:1px solid var(--line-2);border-radius:16px;padding:4px 11px;font-size:12.5px;background:#fff;cursor:pointer;white-space:nowrap}
+.o3 .chipt.on{background:var(--blue-50);border-color:var(--blue);color:var(--blue)}
+.o3 .chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.o3 .abar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#fafbfc;margin-top:14px}
+.o3 .abar .lbl{font-weight:600;margin-right:4px}
+.o3 .abar .sp{flex:1}
+.o3 .src{display:inline-block;border-radius:6px;padding:1px 7px;font-size:11.5px;background:#f1f2f4;color:var(--ink-2);white-space:nowrap}
+.o3 .src.K{background:#fff6e0;color:#b54708}
+.o3 .src.C{background:var(--blue-50);color:var(--blue)}
+.o3 .src.J{background:var(--violet-50);color:var(--violet)}
+.o3 .seg{display:inline-flex;border:1px solid var(--line-2);border-radius:10px;overflow:hidden;font-size:13px}
+.o3 .seg span{padding:5px 12px;cursor:pointer}
+.o3 .seg span.on{background:var(--ink);color:#fff}
+.o3 .ra{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.o3 .ra .btn.sm{padding:5px 10px;font-size:12.5px}
+.o3 .sec3{margin-top:20px}
+.o3 .sec3 h3{font-size:16px;margin:0 0 8px;font-weight:600;display:flex;align-items:center;gap:10px}
+.o3 .dl3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 22px;font-size:13.5px;margin-top:6px}
+.o3 .dl3 div span{display:block;color:var(--muted);font-size:12px}
+.o3 .dem{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 14px;padding:8px 10px;border:1px dashed #d9b400;background:#fffbea;border-radius:10px;font-size:12.5px}
+.o3 .dem b{color:#6b5600;font-weight:600;margin-right:4px}
+.o3 .dem button{font-size:12px;border:1px dashed #b8bdc4;background:#fff;border-radius:8px;padding:5px 9px;cursor:pointer;color:#555b63}
+.o3 .dem button.on{background:#1b1c1f;color:#fff;border-style:solid;border-color:#1b1c1f}
+.o3 .dem label{display:flex;align-items:center;gap:6px;cursor:pointer;color:#6b5600}
+.o3 .mut{color:var(--muted);font-size:12px}
+.o3 .alert{margin-top:12px}
+.o3 .alert .ra{margin-top:8px}
+.o3 .back3{color:var(--muted);cursor:pointer;font-size:13px;display:inline-block;margin-bottom:6px}
+.o3 .cnt3{background:#fde8e7;color:var(--red);border-radius:10px;padding:0 7px;font-size:12px;margin-left:6px}
+.o3 .asub{display:flex;align-items:center}
+.o3 .empty3{text-align:center;color:var(--muted);padding:40px 0}
+.o3m .cntr{font-size:12px;color:var(--muted);text-align:right;margin-top:4px}
+.o3m .fl{font-size:13px;font-weight:500;margin:12px 0 6px;display:block}
+.o3m .box3{background:#f6f7f9;border-radius:10px;padding:10px 12px;font-size:13px;margin-top:10px}
+.o3m .alert{margin-top:12px}
+</style></head><body>
+<div id="app"></div><p style="text-align:center;color:#8b9189;font-size:11.5px;margin:18px 0 28px">Optom.uz · clickable prototype for the order lifecycle user stories (epic US-BF-6.5) · requirements: Order lifecycle PRD · example data only. Where a prototype differs from the acceptance criteria in Confluence, the acceptance criteria win.</p>
+<script>// Prototype harness: scenario picker, notes panel, toasts, icons, seller shell
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const som = n => Math.round(n).toLocaleString("ru-RU").replace(/,/g, " ") + " сум";
+const ICON = {
+  chart: '<svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
+  box: '<svg viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8"/></svg>',
+  list: '<svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
+  chat: '<svg viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z"/></svg>',
+  users: '<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5M16 11a3 3 0 1 0 0-6M21 20c0-2-1.5-4-4-4.6"/></svg>',
+  store: '<svg viewBox="0 0 24 24"><path d="M3 9l2-5h14l2 5M4 9v11h16V9M3 9h18M9 20v-6h6v6"/></svg>',
+  gear: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>',
+  spark: '<svg viewBox="0 0 24 24"><path d="M12 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"/></svg>',
+  truck: '<svg viewBox="0 0 24 24"><path d="M2 6h12v10H2zM14 10h4l3 3v3h-7"/><circle cx="6" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>',
+  pin: '<svg viewBox="0 0 24 24"><path d="M12 22s7-7 7-12a7 7 0 1 0-14 0c0 5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>',
+  phone: '<svg viewBox="0 0 24 24"><path d="M5 3h4l2 5-3 2a12 12 0 0 0 6 6l2-3 5 2v4a2 2 0 0 1-2 2A18 18 0 0 1 3 5a2 2 0 0 1 2-2z"/></svg>',
+  cal: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+  card: '<svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>',
+  msg: '<svg viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z"/></svg>',
+  user: '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>',
+  bell: '<svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 21h4"/></svg>',
+  globe: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>',
+  side: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg>',
+};
+const LOGO = '<span class="logo"><svg width="34" height="34" viewBox="0 0 34 34"><rect x="12" y="2" width="10" height="30" rx="3" fill="#00a028"/><rect x="2" y="8" width="30" height="5" rx="2.5" fill="#00a028"/><rect x="2" y="15" width="30" height="5" rx="2.5" fill="#00a028"/><rect x="2" y="22" width="30" height="5" rx="2.5" fill="#00a028"/><rect x="15" y="9" width="4" height="17" rx="1" fill="#fff"/></svg>optom</span>';
+const YG = '<span class="yglogo">Yandex <i>Go</i></span>';
+const FARGO = '<span style="font-weight:800;font-style:italic;letter-spacing:-.5px"><span style="color:#e3262e">◤</span> FARGO</span>';
+
+function sellerShell(active, crumbs, content) {
+  const nav = (k, ic, t) => `<div class="nav ${active === k ? "on" : ""}">${ICON[ic]}${t}</div>`;
+  return `<div class="shell"><aside class="side">${LOGO}
+    <div class="grp">Основное</div>${nav("an", "chart", "Аналитика")}${nav("pr", "box", "Товары")}${nav("or", "list", "Заказы")}${nav("ch", "chat", "Чаты")}
+    <div class="grp">Организация</div>${nav("em", "users", "Сотрудники")}${nav("br", "store", "Филиалы")}
+    <div class="grp">Система</div>${nav("se", "gear", "Настройки")}${nav("ta", "spark", "Тарифы")}
+    <div class="me"><span class="ava">НА</span><div><b style="font-weight:600">Николаев А. Д.</b><small>● Подтвержден</small></div></div></aside>
+    <main class="main"><div class="top"><span class="iconbtn">${ICON.side.replace("<svg", '<svg width="18" height="18" fill="none" stroke="#38383b"')}</span><div class="crumbs">${crumbs}</div><span class="sp"></span><span class="iconbtn">${ICON.bell.replace("<svg", '<svg width="18" height="18" fill="none" stroke="#38383b"')}</span><span class="lang">Русский ▾</span></div>${content}</main></div>`;
+}
+
+// ---- harness ----
+const H = { scen: [], cur: null, notesOn: false };
+function harness(meta, scenarios) {
+  H.scen = scenarios;
+  const bar = document.createElement("div"); bar.className = "pbar";
+  bar.innerHTML = `<b>${esc(meta.title)}</b><span class="tag">${esc(meta.stories)}</span><span class="tag">v${meta.version}</span>
+    <span>Scenario:</span><select id="scen">${scenarios.map((s, i) => `<option value="${i}">${i + 1}. ${esc(s.label)}</option>`).join("")}</select>
+    <button id="reset" title="Reset the current scenario">↺ Reset</button><span class="sp"></span>
+    <span style="color:#9aa1ab">Prototype · RU UI · notes in English</span>
+    <button id="ntoggle">Notes for this state</button>`;
+  document.body.prepend(bar);
+  const notes = document.createElement("div"); notes.className = "notes"; notes.id = "notes"; document.body.append(notes);
+  $("#scen").onchange = e => go(+e.target.value);
+  $("#reset").onclick = () => go(+$("#scen").value);
+  $("#ntoggle").onclick = () => { H.notesOn = !H.notesOn; notes.classList.toggle("show", H.notesOn); $("#ntoggle").classList.toggle("on", H.notesOn); };
+  const q = new URLSearchParams(location.hash.slice(1)), qs = new URLSearchParams(location.search); go(+(q.get("s") || qs.get("s") || 0));
+}
+function go(i) {
+  const s = H.scen[i]; if (!s) return; H.cur = s; $("#scen").value = i; history.replaceState(null, "", "#s=" + i);
+  s.apply(); setNotes(s.notes, s.src);
+}
+function setNotes(list, src) {
+  $("#notes").innerHTML = `<h4>What this state shows</h4><ul>${(list || []).map(n => `<li>${n}</li>`).join("")}</ul>${src ? `<div class="src">${src}</div>` : ""}`;
+}
+let toastT;
+function toast(t) { let el = $(".toast"); if (!el) { el = document.createElement("div"); el.className = "toast"; document.body.append(el); } el.textContent = t; el.style.display = "block"; clearTimeout(toastT); toastT = setTimeout(() => el.style.display = "none", 3200); }
+function modal(html) { closeModal(); const bg = document.createElement("div"); bg.className = "modal-bg"; bg.id = "mbg"; bg.innerHTML = `<div class="modal">${html}</div>`; document.body.append(bg); return bg; }
+function closeModal() { const m = $("#mbg"); if (m) m.remove(); }
+
+// When embedded in a narrow frame (e.g. Confluence iFrame), scale the desktop layout down to fit
+(function fitFrame() {
+  if (window === window.top) return;
+  const apply = () => { const w = document.documentElement.clientWidth; document.documentElement.style.zoom = w < 1280 ? (w / 1280).toFixed(3) : ""; };
+  apply(); window.addEventListener("resize", apply);
+})();
+
+
+// P-OL2 Order pages: buyer and seller (order lifecycle). Example data only.
+const NO = "68726458";
+const SELLER = "ТехноОпт", BR = "Филиал Чиланзар", BR_ADDR = "Ташкент, Чиланзарский р-н, ул. Бунёдкор, 12";
+const BADDR = "Ташкент, Юнусабад, 4-й квартал, 21";
+const ME = "Николаев А. Д.";
+const ITEMS = [["Смартфон Samsung Galaxy A15, 128 ГБ", 5, 1850000], ["Чехол силиконовый для Galaxy A15", 50, 25000]];
+const GOODS = ITEMS.reduce((a, i) => a + i[1] * i[2], 0);
+const QTY = ITEMS.reduce((a, i) => a + i[1], 0);
+const MPRICE = { pu: 0, sd: 0, yg: 45000, fargo: 38000 };
+const MTXT = { pu: "Самовывоз", sd: "Доставка продавцом", yg: "Yandex Go", fargo: "Fargo" };
+const MLOGO = { pu: "⌂ Самовывоз", sd: "🚚 Доставка продавцом", yg: YG, fargo: FARGO };
+const CANC = [41, 42, 45, 46, 47, 48, 50], PROB = [24, 26, 55, 60];
+// Seller labels (PRD 4.2, 13.2)
+const SL = { 16: ["Новый", "g"], 20: ["Подтверждён", "b"], 25: ["В обработке", "b"], 32: ["Готов к выдаче", "v"], 30: ["В доставке", "v"], 35: ["Доставлен", "n"], 40: ["Завершён", "n"],
+  24: ["Доставка приостановлена", "a"], 26: ["Возвращается к вам", "a"], 55: ["Служба доставки не приняла заказ", "a"], 60: ["Ошибка доставки", "a"],
+  41: ["Отменён покупателем", "r"], 42: ["Не подтверждён за 24 ч", "r"], 45: ["Отменён вами", "r"], 46: ["Отменён Optom", "r"], 48: ["Не забран / отказ", "r"], 50: ["Вернулся к вам", "r"], 47: ["Не оплачен", "n"] };
+const pill = (l, c) => `<span class="pill ${c}">${l}</span>`;
+const spill = st => pill(SL[st][0], SL[st][1]);
+let S = {};
+function reset(o) {
+  closeModal();
+  S = Object.assign({ view: "border", o: null, menu: false, err: "", flash: "", sheet: false, tab: "", race: false, fRefuse: false, fCancelRefuse: false, recent: false, alt: false }, o || {});
+  render(); if (S.open) S.open();
+}
+function render() {
+  const v = S.view;
+  $("#app").innerHTML = v === "border" ? bPage() : v === "blist" ? bList() : v === "slist" ? sList() : v === "sorder" ? sPage() : bApp();
+  bind();
+}
+
+// ================= BUYER =================
+function BO(o) { return Object.assign({ no: NO, m: "yg", st: 16, max: 0, paid: "27.10.2026 в 09:15", exp: "Ожидается 27.10.2026 – 28.10.2026", cancel: null, problem: "", deliv: "", due: "29.10.2026", done: "", paused: false, log: [] }, o); }
+function header() {
+  return `<div class="strip"><span>➤ ${BADDR}</span><span><span>О компании</span><span>Связаться с нами</span><span>Доставка и оплата</span></span></div>
+  <div class="bh">${LOGO}<button class="btn pri">☰ Каталог</button><div class="srch"><input placeholder="Что вы ищете?"><button>Найти</button></div><span class="small">Русский · Избранное · Корзина · <b>Профиль</b></span></div>`;
+}
+const isC = o => CANC.includes(o.st), isP = o => PROB.includes(o.st);
+const bTab = o => isC(o) ? "Отменённые" : (o.st === 35 || o.st === 40) ? "Завершенные" : "Активные";
+const doneWord = o => o.m === "pu" ? "Получен" : "Доставлен";
+function bSteps(o) {
+  const L = o.m === "pu" ? ["Оформлен", "Собирается", "Готов к выдаче", "Получен"] : ["Оформлен", "Собирается", "В пути", "Доставлен"];
+  const I = o.m === "pu" ? ["▤", "▢", "⌂", "✓"] : ["▤", "▢", "⛟", "✓"];
+  return `<div class="steps">${L.map((t, k) => `<div class="step ${k <= o.max ? "on" : ""}"><div class="dot">${I[k]}</div>${t}</div>`).join("")}</div>`;
+}
+// The stage, or the block that replaces it (cancelled, delivery problem). Never says who cancelled (BR-OL19).
+function bStage(o) {
+  if (o.cancel) return `<div class="o2state"><div class="ic">✕</div><div><div class="lbl">Отменён</div><div class="tx"><b>${o.cancel.own ? "Вы отменили заказ" : "Заказ отменён"}</b>${o.cancel.reason ? `<div>${o.cancel.reason}</div>` : ""}${o.cancel.comment ? `<div>Комментарий: ${esc(o.cancel.comment)}</div>` : ""}</div></div></div>`;
+  if (o.problem) return `<div class="o2state"><div class="ic">!</div><div><div class="lbl">Проблема с доставкой</div><div class="tx">Проблема с доставкой: ${o.problem}. Мы разбираемся и сообщим вам.</div></div></div>`;
+  return bSteps(o);
+}
+function bDate(o) {
+  if (o.cancel) return "";
+  if (o.st === 35 || o.st === 40) return `<span class="o2date">${ICON.cal}${doneWord(o)} ${o.deliv}</span>`;
+  return `<span class="o2date">${ICON.cal}${o.exp}</span>`;
+}
+function bActions(o, mob) {
+  const full = mob ? " o2full" : "";
+  if (o.cancel) return "";
+  if (o.st === 16 && o.m === "fargo") return `<div class="alert i mt12"><span class="ic">i</span><div>Заказ с доставкой Fargo нельзя отменить после оплаты. Если что-то не так, напишите продавцу в чат.<div class="mt8"><a href="#" id="chat">Написать продавцу</a></div></div></div>`;
+  if (o.st === 16) return `<div class="o2acts"><button class="btn dan sm${full}" id="bcancel">Отменить заказ</button></div>`;
+  if (o.st === 35) return `<div class="o2acts">${o.paused ? "" : `<button class="btn pri${full}" id="recv">Я получил заказ</button>`}<button class="btn out${full}" id="review">Оставить отзыв</button></div>
+    <p class="hint mt8">${o.paused ? "Автозавершение приостановлено, пока открыт запрос" : `Заказ завершится автоматически ${o.due} в 23:59.`}</p>`;
+  if (o.st === 40) return `<div class="alert s mt12"><span class="ic">✓</span><div><b>Завершён ${o.done}</b></div></div><div class="o2acts"><button class="btn out${full}" id="review">Оставить отзыв</button></div>`;
+  return "";
+}
+function bWhere(o) {
+  const pu = o.m === "pu";
+  return `<div class="kv">${ICON.store}<div><span class="k">Продавец:</span> <b>${SELLER}</b> · ${BR}<div class="small muted">${BR_ADDR}</div></div></div>
+    <div class="kv">${ICON.pin}<div><span class="k">${pu ? "Пункт самовывоза:" : "Адрес доставки:"}</span> ${pu ? BR + ", " + BR_ADDR : BADDR}</div></div>`;
+}
+function bTrack(o, mob) {
+  const fargo16 = o.st === 16 && o.m === "fargo";
+  return `<div class="track"><div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:6px"><b>${MLOGO[o.m]} · ${o.m === "pu" || o.m === "sd" ? "0 сум" : som(MPRICE[o.m])}</b>${bDate(o)}</div>
+    ${S.flash ? `<div class="alert e mt12"><span class="ic">!</span><div>${S.flash}</div></div>` : ""}${bActions(o, mob)}
+    <div class="mt12" style="border-top:1px solid var(--line);padding-top:4px">${bWhere(o)}</div>
+    ${fargo16 ? "" : `<button class="btn soft sm mt8" id="chat">${ICON.chat.replace("<svg", '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"')} Написать продавцу</button>`}</div>`;
+}
+function bItems(o) {
+  return `<div class="blk mt16"><h2>Товары${isC(o) ? ' <span class="small muted" style="font-weight:400">· как в заказе</span>' : ""}</h2>${ITEMS.map(i => `<div class="o2line"><span class="thumb"></span><div>${i[0]}<div class="small muted">${i[1]} шт. × ${som(i[2])}</div></div><b>${som(i[1] * i[2])}</b></div>`).join("")}</div>`;
+}
+function bLog(o) {
+  return `<div class="blk"><h2>История заказа</h2><div class="timeline">${o.log.map(([t, x]) => `<div class="it"><span class="d">•</span><div>${x}<small>${t}</small></div></div>`).join("")}</div></div>`;
+}
+function bSum(o) {
+  const d = MPRICE[o.m];
+  return `<div class="sumc"><h3 style="margin:0 0 8px">Ваш заказ</h3><div class="ln">${ITEMS.length} товара · ${QTY} шт.<b>${som(GOODS)}</b></div><div class="ln">Доставка<b>${d ? som(d) : "0 сум"}</b></div>
+    <div class="tot"><span>Итого</span><span>${som(GOODS + d)}</span></div><p class="small muted mt12">Оплачен ${o.paid} · Paylov</p></div>`;
+}
+function bPage() {
+  const o = S.o;
+  return `<div class="buyer">${header()}<div class="wrapb"><div class="small muted">Главная › Мои заказы › ${bTab(o)}</div>
+    <h1 style="font-size:28px;margin:8px 0 2px">Заказ №${o.no}</h1><div class="small muted" style="margin-bottom:16px">от ${o.paid}</div>
+    <div class="oc"><div>${bStage(o)}${bTrack(o)}${S.demo ? `<div class="o2demo">${S.demo()}</div>` : ""}${bItems(o)}${bLog(o)}</div>${bSum(o)}</div></div></div>`;
+}
+function bApp() {
+  const o = S.o;
+  const sheet = S.sheet ? `<div class="o2dim"></div><div class="sheet"><h3 style="margin:0 0 6px">Подтвердить получение заказа №${o.no}?</h3><p class="sub">Заказ будет завершён.</p>
+    <button class="btn pri big" id="ayes" style="width:100%">Подтвердить</button><button class="btn out o2full mt8" id="ano" style="width:100%">Не сейчас</button></div>` : "";
+  return `<div class="phonewrap"><div class="phone"><div class="sb"><span>9:41</span><span>▮▮▮ ◔</span></div><div class="ah"><span>‹</span><b>Заказ №${o.no}</b></div>
+    <div class="pc" style="padding-bottom:80px"><div class="card">${bStage(o)}<div class="mt12">${bDate(o)}</div>${bActions(o, true)}</div>
+    <div class="card"><b>${MLOGO[o.m]} · ${som(MPRICE[o.m])}</b>${bWhere(o)}</div>
+    <div class="card"><b>Товары</b>${ITEMS.map(i => `<div class="o2line" style="grid-template-columns:40px 1fr"><span class="thumb"></span><div>${i[0]}<div class="small muted">${i[1]} шт. × ${som(i[2])}</div></div></div>`).join("")}
+      <div class="row mt8" style="justify-content:space-between"><b>Итого</b><b>${som(GOODS + MPRICE[o.m])}</b></div></div></div>
+    <div class="tabbar"><span>Главная</span><span>Каталог</span><span>Корзина</span><span class="on">Заказы</span><span>Профиль</span></div>${sheet}</div></div>`;
+}
+// ----- buyer order list -----
+const BROWS = {
+  "Активные": [["68726458", "27.10.2026", "yg", ["Оформлен", "n"], "Ожидается 27.10.2026 – 28.10.2026", 0], ["68726391", "26.10.2026", "sd", ["Собирается", "b"], "Ожидается до 29.10.2026"],
+    ["68726305", "25.10.2026", "fargo", ["В пути", "v"], "Ожидается 26.10.2026 – 28.10.2026", 5], ["68726277", "24.10.2026", "fargo", ["Проблема с доставкой", "r"], "Ожидается 25.10.2026 – 27.10.2026", 6]],
+  "Завершенные": [["68726190", "26.10.2026", "yg", ["Доставлен", "g"], "Доставлен 26.10.2026", 7], ["68726233", "25.10.2026", "pu", ["Получен", "g"], "Получен 26.10.2026"], ["68725984", "21.10.2026", "fargo", ["Доставлен", "g"], "Завершён 24.10.2026", 8]],
+  "Отменённые": [["68726412", "27.10.2026", "yg", ["Отменён", "r"], "", 3], ["68726120", "26.10.2026", "yg", ["Отменён", "r"], "", 4], ["68725877", "25.10.2026", "fargo", ["Отменён", "r"], ""], ["68719033", "03.10.2026", "fargo", ["Отменён", "r"], ""]] };
+function bList() {
+  const t = S.tab || "Активные", rows = BROWS[t];
+  return `<div class="buyer">${header()}<div class="wrapb"><div class="small muted">Главная › Мои заказы</div><h1 style="font-size:28px;margin:8px 0 10px">Мои заказы</h1>
+    <div class="o2tabs">${Object.keys(BROWS).map(k => `<span class="o2tab ${k === t ? "on" : ""}" data-tab="${k}">${k}<span class="c">${BROWS[k].length}</span></span>`).join("")}</div>
+    <table class="t"><thead><tr><th>Заказ</th><th>Продавец</th><th>Способ получения</th><th>Статус</th><th>Срок</th><th style="text-align:right">Сумма</th></tr></thead><tbody>
+    ${rows.map(r => `<tr class="${r[5] !== undefined ? "o2go" : ""}" ${r[5] !== undefined ? `data-go="${r[5]}"` : ""}><td><b>№${r[0]}</b><div class="small muted">от ${r[1]}</div></td><td>${SELLER}<div class="small muted">${BR}</div></td><td>${MTXT[r[2]]}</td><td>${pill(r[3][0], r[3][1])}</td><td class="small">${r[4] || "—"}</td><td style="text-align:right"><b>${som(GOODS + MPRICE[r[2]])}</b></td></tr>`).join("")}</tbody></table>
+    <p class="hint mt12">Строки со ссылкой открывают соответствующий сценарий прототипа.</p></div></div>`;
+}
+
+// ================= SELLER =================
+function SO(o) { return Object.assign({ no: NO, m: "fargo", st: 16, buyer: "Азизбек Хамидов", phone: "+998 90 222 02 20", paid: "26.10.2026 16:42", deadline: "27.10.2026 16:42", left: "Осталось 5 ч 12 мин", red: false, expired: false, exp: "27.10.2026 – 29.10.2026", deliv: "", due: "", cancel: null, problem: "", canDeliver: false, whyNot: "", hist: [], chat: "" }, o); }
+const NOW = "27.10.2026 11:30";
+const HI = (t, x) => Object.assign({ t }, x);
+function sHist(o) {
+  const src = { "действие": "", "задание": "job", "событие службы доставки": "ev", "исправление": "cor" };
+  return `<div class="o2hist">${o.hist.map(h => {
+    const main = h.corr ? `<b>${SL[h.st][0]}</b> — установил ${ME}: ${esc(h.cm)}`
+      : `${h.st ? pill(SL[h.st][0], SL[h.st][1]) + " " : ""}${h.ev ? `<span>${h.ev}</span>` : ""}`;
+    return `<div class="it"><div class="tm">${h.t}</div><div><div>${main}</div><div class="meta">${h.who} · <span class="o2src ${src[h.src]}">${h.src}</span></div>${h.cm && !h.corr ? `<div class="cm">Комментарий: ${esc(h.cm)}</div>` : ""}</div></div>`;
+  }).join("")}</div>`;
+}
+function sMenu(o) {
+  if (!["fargo", "yg"].includes(o.m) || ![30, 35].includes(o.st)) return "";
+  let items = "";
+  if (o.st === 30) items = o.canDeliver ? `<div class="mi" data-corr="35">Отметить доставленным</div>` : `<div class="mh">${o.whyNot}</div>`;
+  if (o.st === 35) items = `<div class="mi" data-corr="30">Не доставлен</div>`;
+  return `<div class="o2mw mt12"><button class="btn out" id="chg">Изменить статус ▾</button>${S.menu ? `<div class="o2menu">${items}</div>` : ""}</div>`;
+}
+function sCancelBlock(o) {
+  const c = o.cancel;
+  return `<div class="kv mt8">${ICON.user}<div><span class="k">Кто отменил:</span> ${c.who}</div></div><div class="kv">${ICON.cal}<div><span class="k">Когда:</span> ${c.when}</div></div>
+    <div class="kv">${ICON.msg}<div><span class="k">Комментарий:</span> ${c.cm ? esc(c.cm) : "—"}</div></div>`;
+}
+function sActions(o) {
+  const b = (id, cls, t) => `<button class="btn ${cls}" id="${id}">${t}</button>`;
+  const err = S.err ? `<div class="alert e mt12"><span class="ic">!</span><div>${S.err}</div></div>` : "";
+  const carrier = MTXT[o.m];
+  if (o.st === 16) return `<h3>Подтвердите заказ</h3><p class="sub">Подтвердите или отклоните заказ до ${o.deadline}.</p>
+    <div class="row mt8"><span class="muted">Осталось на подтверждение:</span><span class="o2left ${o.red ? "red" : ""}">${o.left}</span></div>${err}
+    <div class="row mt12">${b("reject", "dan", "Отклонить")}${b("confirm", "pri", "Подтвердить")}</div>
+    ${o.expired ? `<div class="o2demo"><button id="job">демо: задание отмены (каждые 5 минут)</button></div>` : o.m === "fargo" ? `<div class="o2demo"><label class="${S.fRefuse ? "on" : ""}"><input type="checkbox" id="frefuse" ${S.fRefuse ? "checked" : ""}>демо: Fargo не принял заказ</label></div>` : ""}`;
+  if (o.st === 25) return `<h3>Ждём курьера ${carrier}</h3><p class="sub">Курьер заберёт заказ в филиале. Пока курьер не забрал посылку, вы можете отменить заказ.</p>${err}<div class="row mt12">${b("scancel", "dan", "Отменить заказ")}</div>`;
+  if (o.st === 30) return `<h3>Заказ в доставке</h3><p class="sub">Статус меняется по событиям ${carrier}.</p>${sMenu(o)}`;
+  if (o.st === 35) return `<h3>Заказ доставлен</h3><p class="sub">Доставлен ${o.deliv}. Заказ завершится, когда покупатель подтвердит получение, или автоматически ${o.due} в 23:59.</p>${sMenu(o)}`;
+  if (PROB.includes(o.st)) return `<div class="alert w"><span class="ic">!</span><div><b>${SL[o.st][0]}</b>Проблема с доставкой: ${o.problem}. Поддержка Optom.uz решит, что делать дальше.</div></div>`;
+  if (CANC.includes(o.st)) return `<div class="alert e"><span class="ic">!</span><div><b>${SL[o.st][0]}</b>Товары вернулись на остаток филиала.</div></div>${sCancelBlock(o)}`;
+  return "";
+}
+function sPage() {
+  const o = S.o, d = MPRICE[o.m];
+  return sellerShell("or", `Заказы <span>›</span> <b>№${o.no}</b>`, `<div class="h1">Заказ №${o.no} ${spill(o.st)}</div><div class="og"><div>
+    <div class="card">${sActions(o)}${S.pdemo ? `<div class="o2demo">${S.pdemo()}</div>` : ""}</div>
+    <div class="card"><h3>Доставка</h3>
+      <div class="kv">${ICON.truck}<div><span class="k">Способ:</span> ${MLOGO[o.m]}${o.m === "fargo" ? ' · <span class="small muted">заказ Fargo FG-2610-55831</span>' : ""}</div></div>
+      <div class="kv">${ICON.store}<div><span class="k">Филиал отправки:</span> <b>${BR}</b> · ${BR_ADDR}</div></div>
+      <div class="kv">${ICON.pin}<div><span class="k">Адрес покупателя:</span> ${BADDR}</div></div>
+      <div class="kv">${ICON.cal}<div><span class="k">Ожидается:</span> ${o.exp}${o.overdue && o.st === 30 ? ' <span class="overdue">· прошла</span>' : ""}</div></div>
+      <div class="kv">${ICON.user}<div><span class="k">Покупатель:</span> ${o.buyer} · ${o.phone}</div></div></div>
+    <div class="card"><h3>Товары</h3>${ITEMS.map(i => `<div class="prod mt8"><span class="thumb"></span><div style="flex:1">${i[0]}<div class="small muted">${i[1]} шт. × ${som(i[2])}</div></div><b>${som(i[1] * i[2])}</b></div>`).join("")}</div>
+    <div class="card"><h3>История заказа</h3><p class="sub small" style="margin-bottom:6px">Статусы и события службы доставки, новые сверху. Время ташкентское.</p>${sHist(o)}</div></div>
+    <div><div class="card"><h3>Сумма заказа</h3><div class="kv"><div style="flex:1">Товары</div><b>${som(GOODS)}</b></div><div class="kv"><div style="flex:1">Доставка (${MTXT[o.m]})</div><b>${d ? som(d) : "0 сум"}</b></div>
+      <div class="kv"><div style="flex:1"><b>Итого</b></div><b>${som(GOODS + d)}</b></div><p class="small muted">Оплачен ${o.paid} · Paylov</p></div>
+      ${o.chat ? `<div class="card"><h3>Чат с покупателем</h3><div class="o2chat">${o.chat}<small>${o.buyer} · 27.10.2026 09:40</small></div><button class="btn soft sm mt12">Открыть чат</button></div>` : ""}</div></div>`);
+}
+// ----- seller order list -----
+const SROWS = {
+  "Новые": [[NO, "26.10.2026 16:42", "Азизбек Хамидов", 16, "fargo", "27.10.2026 – 29.10.2026", "Осталось 5 ч 12 мин", 0, 11], ["68726470", "26.10.2026 13:05", "ООО «Савдо Плюс»", 16, "yg", "26.10.2026 – 27.10.2026", "Осталось 1 ч 35 мин", 1],
+    ["68726495", "27.10.2026 09:20", "ИП Каримов Ш.", 16, "sd", "до 30.10.2026", "Осталось 21 ч 50 мин", 0]],
+  "В работе": [["68726331", "26.10.2026 12:10", "ООО «Мега Телеком»", 25, "fargo", "27.10.2026 – 29.10.2026", "", 0, 13], ["68726418", "27.10.2026 08:05", "Дилшод Юсупов", 20, "yg", "27.10.2026 – 28.10.2026"], ["68726377", "25.10.2026 17:30", "ИП Рахимова Н.", 32, "pu", "хранение до 30.10.2026"]],
+  "В доставке": [["68726187", "23.10.2026 09:30", "ООО «Савдо Плюс»", 30, "fargo", "24.10.2026 – 26.10.2026", "", 0, 14], ["68726352", "25.10.2026 15:12", "Азизбек Хамидов", 30, "sd", "до 28.10.2026"]],
+  "Доставлены": [["68726190", "26.10.2026 10:00", "Отабек Назаров", 35, "yg", "доставлен 26.10.2026", "", 0, 15], ["68726233", "25.10.2026 11:40", "ИП Каримов Ш.", 35, "pu", "получен 26.10.2026"]],
+  "Завершены": [["68725984", "21.10.2026 14:20", "ООО «Мега Телеком»", 40, "fargo", "доставлен 22.10.2026"], ["68725911", "20.10.2026 10:05", "Дилшод Юсупов", 40, "sd", "доставлен 21.10.2026"]],
+  "Отменены": [["68726412", "27.10.2026 09:15", "Отабек Назаров", 41, "yg", "—", "", 0, 16], ["68726120", "26.10.2026 09:10", "ИП Рахимова Н.", 42, "yg", "—", "", 0, 12], ["68725877", "25.10.2026 10:30", "Азизбек Хамидов", 45, "fargo", "—"],
+    ["68725802", "24.10.2026 16:55", "ООО «Савдо Плюс»", 46, "sd", "—"], ["68725790", "20.10.2026 12:00", "ИП Каримов Ш.", 48, "pu", "—"], ["68725655", "18.10.2026 09:45", "Дилшод Юсупов", 50, "fargo", "—"]],
+  "Проблемные": [["68726277", "24.10.2026 11:15", "ООО «Мега Телеком»", 24, "fargo", "25.10.2026 – 27.10.2026"], ["68726260", "24.10.2026 10:20", "Отабек Назаров", 26, "yg", "24.10.2026 – 25.10.2026"],
+    ["68726249", "26.10.2026 18:02", "ИП Рахимова Н.", 55, "fargo", "27.10.2026 – 29.10.2026"], ["68726238", "26.10.2026 12:30", "Дилшод Юсупов", 60, "yg", "26.10.2026 – 27.10.2026"]] };
+function sList() {
+  const t = S.tab || "Новые", rows = SROWS[t], isNew = t === "Новые";
+  return sellerShell("or", "<b>Заказы</b>", `<div class="h1">Заказы</div><div class="card">
+    <div class="o2tabs">${Object.keys(SROWS).map(k => `<span class="o2tab ${k === t ? "on" : ""}" data-tab="${k}">${k}<span class="c ${k === "Проблемные" ? "r" : ""}">${SROWS[k].length}</span></span>`).join("")}</div>
+    <table class="t"><thead><tr><th>№ заказа</th><th>Дата</th><th>Покупатель</th><th>Статус</th><th>Способ</th><th>Ожидается</th>${isNew ? "<th>На подтверждение</th>" : ""}</tr></thead><tbody>
+    ${rows.map(r => `<tr class="${r[8] !== undefined ? "o2go" : ""}" ${r[8] !== undefined ? `data-go="${r[8]}"` : ""}><td><b>№${r[0]}</b></td><td class="small">${r[1]}</td><td>${r[2]}</td><td>${spill(r[3])}</td><td>${MTXT[r[4]]}</td><td class="small">${r[5]}</td>${isNew ? `<td><span class="o2left ${r[7] ? "red" : ""}">${r[6]}</span></td>` : ""}</tr>`).join("")}</tbody></table>
+    <p class="hint mt12">Строки со ссылкой открывают соответствующий сценарий прототипа.</p></div>`);
+}
+
+// ================= dialogs =================
+// Cancel / reject dialog: optional comment ≤ 500 (M-OL9, M-OL10, M-OL11)
+function commentDialog(opt) {
+  const m = modal(`<h3>${opt.title}</h3><div class="field mt12"><label>Комментарий (необязательно) <span class="counter" id="cnt">0/500</span></label><textarea class="inp" id="cm" maxlength="500"></textarea></div>
+    ${opt.demo ? `<div class="o2demo">${opt.demo}</div>` : ""}<div class="acts"><button class="btn out" id="no">${opt.no}</button><button class="btn danfill" id="yes">${opt.ok}</button></div>`);
+  const ta = $("#cm", m); ta.oninput = () => $("#cnt", m).textContent = ta.value.length + "/500";
+  m.querySelectorAll("input[type=checkbox]").forEach(x => x.onchange = () => { S[x.dataset.k] = x.checked; x.parentElement.classList.toggle("on", x.checked); });
+  $("#no", m).onclick = closeModal;
+  $("#yes", m).onclick = () => { const v = ta.value.trim(); closeModal(); opt.onOk(v); };
+}
+function bCancelDialog() {
+  commentDialog({ title: `Отменить заказ №${S.o.no}?`, ok: "Отменить заказ", no: "Не отменять",
+    demo: `<label class="${S.race ? "on" : ""}"><input type="checkbox" data-k="race" ${S.race ? "checked" : ""}>демо: продавец уже подтвердил</label>`,
+    onOk: v => {
+      if (S.race) { S.race = false; S.o.st = 25; S.o.max = 1; S.o.log.unshift(["27.10.2026 09:31", "Заказ собирается"]); S.flash = "Статус заказа изменился. Обновите страницу."; S.demo = null; render(); return toast("Статус заказа изменился. Обновите страницу."); }
+      S.o.st = 41; S.o.cancel = { own: true, comment: v }; S.o.log.unshift(["27.10.2026 09:32", "Вы отменили заказ"]); S.demo = null; render();
+    } });
+}
+function recvDialog() {
+  if (S.view === "bapp") { S.sheet = true; return render(); }
+  const m = modal(`<h3>Подтвердить получение заказа №${S.o.no}?</h3><p class="sub">Заказ будет завершён.</p><div class="acts"><button class="btn out" id="no">Не сейчас</button><button class="btn pri" id="yes">Подтвердить</button></div>`);
+  $("#no", m).onclick = closeModal; $("#yes", m).onclick = () => { closeModal(); complete(); };
+}
+function complete() { S.sheet = false; S.o.st = 40; S.o.done = "27.10.2026"; S.o.log.unshift(["27.10.2026 11:30", "Заказ завершён"]); S.demo = null; render(); toast("Заказ завершён"); }
+function sRejectDialog() {
+  commentDialog({ title: `Отклонить заказ №${S.o.no}?`, ok: "Отклонить", no: "Назад",
+    onOk: v => { const o = S.o; o.st = 45; o.cancel = { who: `Вы (${ME})`, when: NOW, cm: v }; o.hist.unshift(HI(NOW, { st: 45, who: ME + " · продавец", src: "действие", cm: v })); S.fRefuse = false; render(); toast("Заказ отклонён"); } });
+}
+function sCancelDialog() {
+  commentDialog({ title: `Отменить заказ №${S.o.no}?`, ok: "Отменить заказ", no: "Не отменять",
+    demo: `<label class="${S.fCancelRefuse ? "on" : ""}"><input type="checkbox" data-k="fCancelRefuse" ${S.fCancelRefuse ? "checked" : ""}>демо: Fargo отказал</label>`,
+    onOk: v => {
+      const o = S.o;
+      if (S.fCancelRefuse) { S.err = "<b>Этот заказ уже нельзя отменить.</b>Причина от Fargo: Курьер уже забрал посылку"; return render(); }
+      S.err = ""; o.hist.unshift(HI(NOW, { st: 45, who: ME + " · продавец", src: "действие", cm: v }));
+      o.st = 45; o.cancel = { who: `Вы (${ME})`, when: NOW, cm: v }; render(); toast("Заказ отменён");
+    } });
+}
+function corrDialog(to) {
+  const lbl = SL[to][0];
+  const m = modal(`<h3>Изменить статус на «${lbl}»?</h3><p class="sub">Используйте, только если служба доставки не обновила заказ.</p>
+    <div class="field mt12"><label>Комментарий (обязательно) <span class="counter" id="cnt">0/500</span></label><textarea class="inp" id="cm" maxlength="500"></textarea><span class="err-t" id="e"></span></div>
+    <div class="acts"><button class="btn out" id="no">Отмена</button><button class="btn pri" id="yes">Изменить статус</button></div>`);
+  const ta = $("#cm", m); ta.oninput = () => { $("#cnt", m).textContent = ta.value.length + "/500"; ta.classList.remove("err"); $("#e", m).textContent = ""; };
+  $("#no", m).onclick = closeModal;
+  $("#yes", m).onclick = () => {
+    const v = ta.value.trim(); if (!v) { ta.classList.add("err"); return $("#e", m).textContent = "Напишите, почему меняете статус."; }
+    const o = S.o; closeModal(); S.menu = false;
+    o.hist.unshift(HI(NOW, { st: to, who: ME + " · продавец", src: "исправление", cm: v, corr: true }));
+    if (to === 35) { o.deliv = "27.10.2026 в 11:30"; o.due = "30.10.2026"; }
+    if (to === 30) { o.canDeliver = false; o.whyNot = "«Отметить доставленным» станет доступно, когда пройдёт ожидаемая дата (до 27.10.2026) и от Yandex Go не будет событий больше 24 часов."; }
+    o.st = to; S.pdemo = null; render(); toast("Статус изменён");
+  };
+}
+
+// ================= bind =================
+function bind() {
+  const on = (id, f) => { const e = $("#" + id); if (e) e.onclick = f; };
+  on("bcancel", bCancelDialog); on("recv", recvDialog); on("review", () => toast("Открывается форма отзыва"));
+  on("chat", e => { e.preventDefault(); toast("Открывается чат с продавцом"); });
+  on("ayes", complete); on("ano", () => { S.sheet = false; render(); });
+  document.querySelectorAll("[data-tab]").forEach(x => x.onclick = () => { S.tab = x.dataset.tab; render(); });
+  document.querySelectorAll("tr[data-go]").forEach(x => x.onclick = () => go(+x.dataset.go));
+  document.querySelectorAll("[data-m]").forEach(x => x.onclick = () => { const m = x.dataset.m; S.o.m = m; S.o.exp = { yg: "Ожидается 27.10.2026 – 28.10.2026", sd: "Ожидается до 29.10.2026", pu: "Продавец готовит заказ" }[m]; render(); });
+  document.querySelectorAll("[data-sw]").forEach(x => x.onclick = () => { S.sw(x.dataset.sw); render(); });
+  // seller
+  on("confirm", () => {
+    const o = S.o; if (o.expired) { S.err = "Время на подтверждение истекло. Заказ будет отменён автоматически."; return render(); }
+    S.err = "";
+    if (o.m === "fargo" && S.fRefuse) { o.st = 55; o.problem = "служба доставки не приняла заказ"; o.hist.unshift(HI(NOW, { ev: "Служба доставки не приняла заказ", who: "Fargo", src: "событие службы доставки" }), HI(NOW, { st: 55, who: ME + " · продавец (ответ Fargo)", src: "действие" })); render(); return toast("Служба доставки не приняла заказ"); }
+    o.st = 25; o.hist.unshift(HI("27.10.2026 11:31", { ev: "Ищем курьера", who: "Fargo", src: "событие службы доставки" }), HI(NOW, { st: 25, who: ME + " · продавец", src: "действие" })); render(); toast("Заказ подтверждён");
+  });
+  on("reject", () => { if (S.o.expired) { S.err = "Время на подтверждение истекло. Заказ будет отменён автоматически."; return render(); } sRejectDialog(); });
+  on("job", () => { const o = S.o; o.st = 42; S.err = ""; o.cancel = { who: "Optom.uz (заказ не подтверждён за 24 часа)", when: "27.10.2026 10:05", cm: "" }; o.hist.unshift(HI("27.10.2026 10:05", { st: 42, who: "Optom.uz", src: "задание" })); render(); toast("Задание отменило заказ"); });
+  const fr = $("#frefuse"); if (fr) fr.onchange = () => { S.fRefuse = fr.checked; render(); };
+  on("scancel", sCancelDialog);
+  on("chg", () => { S.menu = !S.menu; render(); });
+  document.querySelectorAll("[data-corr]").forEach(x => x.onclick = () => corrDialog(+x.dataset.corr));
+}
+
+// ================= scenario data =================
+const LOG_PAID = ["27.10.2026 09:15", "Заказ оформлен и оплачен"];
+function b16(m) { return BO({ m, log: [LOG_PAID.slice()] }); }
+function methodDemo() { return ["yg", "sd", "pu"].map(k => `<button data-m="${k}" class="${S.o.m === k ? "on" : ""}">демо: ${MTXT[k]}</button>`).join(""); }
+function otherCancel(k) {
+  const base = { m: "yg", st: +k, max: 0, no: "68726120", paid: "26.10.2026 в 09:10", log: [["26.10.2026 09:10", "Заказ оформлен и оплачен"]] };
+  const v = {
+    42: { cancel: { reason: "Причина: заказ не подтверждён вовремя" }, log: [["27.10.2026 09:12", "Заказ отменён"]] },
+    45: { m: "fargo", max: 1, cancel: { comment: "нет в наличии" }, log: [["26.10.2026 15:20", "Заказ отменён"], ["26.10.2026 10:30", "Заказ собирается"]] },
+    46: { m: "sd", cancel: {}, log: [["26.10.2026 12:40", "Заказ отменён"]] },
+    50: { m: "fargo", max: 2, cancel: { reason: "Причина: посылку не удалось доставить, она вернулась отправителю" }, log: [["27.10.2026 10:15", "Заказ отменён"], ["26.10.2026 18:00", "Проблема с доставкой"], ["26.10.2026 16:30", "Не удалось доставить заказ"], ["26.10.2026 12:05", "Заказ в пути"], ["26.10.2026 10:40", "Заказ собирается"]] } }[k];
+  const paidLog = base.log; const o = BO(Object.assign(base, v)); o.log = v.log.concat(paidLog); return o;
+}
+const CODES = { 42: "42 не подтверждён за 24 ч", 45: "45 продавец, с комментарием", 46: "46 Optom, без комментария", 50: "50 посылка вернулась" };
+function b30(early) {
+  const all = [["26.10.2026 13:30", "Курьер забрал заказ"], ["26.10.2026 09:10", "Повторная попытка забора"], ["25.10.2026 15:40", "Заказ в пути"], ["25.10.2026 15:40", "Курьер забрал заказ"], ["25.10.2026 11:00", "Заказ собирается"], ["25.10.2026 10:05", "Заказ оформлен и оплачен"]];
+  return BO({ no: "68726305", m: "fargo", st: early ? 25 : 30, max: 2, paid: "25.10.2026 в 10:05", exp: "Ожидается 26.10.2026 – 28.10.2026", log: early ? all.slice(1) : all });
+}
+function b35(o) {
+  return BO(Object.assign({ no: "68726190", m: "yg", st: 35, max: 3, paid: "26.10.2026 в 10:00", deliv: "26.10.2026 в 14:00", due: "29.10.2026",
+    log: [["26.10.2026 14:00", "Заказ доставлен"], ["26.10.2026 12:35", "Заказ в пути"], ["26.10.2026 11:50", "Заказ собирается"], ["26.10.2026 10:00", "Заказ оформлен и оплачен"]] }, o || {}));
+}
+function deliveredDemo() {
+  return `<label class="${S.o.m === "pu" ? "on" : ""}"><input type="checkbox" data-d="pu" ${S.o.m === "pu" ? "checked" : ""}>демо: самовывоз</label><label class="${S.o.paused ? "on" : ""}"><input type="checkbox" data-d="ret" ${S.o.paused ? "checked" : ""}>демо: открыт запрос на возврат</label>`;
+}
+document.addEventListener("change", e => {
+  const d = e.target.dataset && e.target.dataset.d; if (!d) return;
+  if (d === "pu") { S.o.m = e.target.checked ? "pu" : "yg"; S.o.log[0][1] = e.target.checked ? "Заказ получен" : "Заказ доставлен"; S.o.log[1][1] = e.target.checked ? "Заказ готов к выдаче" : "Заказ в пути"; }
+  if (d === "ret") S.o.paused = e.target.checked;
+  if (d === "recent") { S.o.canDeliver = !e.target.checked; if (e.target.checked) S.o.hist.unshift(RECENT); else S.o.hist = S.o.hist.filter(h => h !== RECENT); S.menu = true; }
+  if (d === "alt") { S.alt = e.target.checked; S.o = S.alt ? s45Fargo() : s41(); }
+  render();
+});
+// seller orders
+const H16 = (t) => HI(t, { st: 16, who: "Покупатель · оплата Paylov", src: "действие" });
+function s16() { return SO({ hist: [H16("26.10.2026 16:42")] }); }
+function s25() {
+  return SO({ no: "68726331", st: 25, buyer: "ООО «Мега Телеком»", paid: "26.10.2026 12:10", exp: "27.10.2026 – 29.10.2026",
+    hist: [HI("26.10.2026 14:05", { ev: "Курьер назначен и едет в филиал", who: "Fargo", src: "событие службы доставки" }), HI("26.10.2026 12:41", { ev: "Ищем курьера", who: "Fargo", src: "событие службы доставки" }),
+      HI("26.10.2026 12:40", { st: 25, who: ME + " · продавец", src: "действие" }), H16("26.10.2026 12:10")] });
+}
+const RECENT = HI("27.10.2026 08:30", { ev: "Заказ на сортировке или в пути", who: "Fargo", src: "событие службы доставки" });
+function s30() {
+  return SO({ no: "68726187", st: 30, buyer: "ООО «Савдо Плюс»", paid: "23.10.2026 09:30", exp: "24.10.2026 – 26.10.2026", overdue: true, canDeliver: true,
+    whyNot: "«Отметить доставленным» станет доступно, когда пройдёт ожидаемая дата и от Fargo не будет событий больше 24 часов. Последнее событие Fargo: 27.10.2026 08:30.",
+    hist: [HI("25.10.2026 11:20", { ev: "Курьер везёт заказ к вам", who: "Fargo", src: "событие службы доставки" }), HI("24.10.2026 09:00", { ev: "Заказ на сортировке или в пути", who: "Fargo", src: "событие службы доставки" }),
+      HI("23.10.2026 15:00", { st: 30, ev: "Курьер забрал заказ", who: "Fargo", src: "событие службы доставки" }), HI("23.10.2026 10:11", { ev: "Ищем курьера", who: "Fargo", src: "событие службы доставки" }),
+      HI("23.10.2026 10:10", { st: 25, who: ME + " · продавец", src: "действие" }), H16("23.10.2026 09:30")] });
+}
+function s35() {
+  return SO({ no: "68726190", m: "yg", st: 35, buyer: "Отабек Назаров", phone: "+998 93 410 45 67", paid: "26.10.2026 10:00", exp: "26.10.2026 – 27.10.2026", deliv: "26.10.2026 в 14:00", due: "29.10.2026",
+    chat: "Здравствуйте! Заказ так и не пришёл, курьер не приезжал.",
+    hist: [HI("26.10.2026 14:00", { st: 35, ev: "Заказ доставлен", who: "Yandex Go", src: "событие службы доставки" }), HI("26.10.2026 12:35", { st: 30, ev: "Курьер забрал заказ", who: "Yandex Go", src: "событие службы доставки" }),
+      HI("26.10.2026 12:05", { ev: "Курьер назначен и едет в филиал", who: "Yandex Go", src: "событие службы доставки" }), HI("26.10.2026 11:58", { st: 25, ev: "Ищем курьера", who: "Yandex Go", src: "событие службы доставки" }),
+      HI("26.10.2026 11:50", { st: 20, who: ME + " · продавец", src: "действие" }), H16("26.10.2026 10:00")] });
+}
+function s41() {
+  return SO({ no: "68726412", m: "yg", st: 41, buyer: "Отабек Назаров", paid: "27.10.2026 09:15", exp: "27.10.2026 – 28.10.2026", cancel: { who: "Покупатель", when: "27.10.2026 09:32", cm: "Ошиблись с количеством, оформим заново" },
+    hist: [HI("27.10.2026 09:32", { st: 41, who: "Покупатель", src: "действие", cm: "Ошиблись с количеством, оформим заново" }), H16("27.10.2026 09:15")] });
+}
+function s45Fargo() {
+  return SO({ no: "68725877", st: 45, paid: "25.10.2026 10:30", exp: "26.10.2026 – 28.10.2026", cancel: { who: `Вы (${ME})`, when: "26.10.2026 15:20", cm: "нет в наличии" },
+    hist: [HI("26.10.2026 15:20", { st: 45, who: ME + " · продавец", src: "действие", cm: "нет в наличии" }),
+      HI("26.10.2026 09:40", { ev: "Не удалось забрать заказ у продавца", who: "Fargo", src: "событие службы доставки" }), HI("25.10.2026 14:05", { ev: "Курьер назначен и едет в филиал", who: "Fargo", src: "событие службы доставки" }),
+      HI("25.10.2026 10:31", { ev: "Ищем курьера", who: "Fargo", src: "событие службы доставки" }), HI("25.10.2026 10:30", { st: 25, who: ME + " · продавец", src: "действие" }), H16("25.10.2026 10:00")] });
+}
+
+harness({ title: "P-OL2 Order pages: buyer and seller", stories: "US-BF-6.5-04/05 · US-BF-6.6-01 · US-SF-5.7-01 · US-SF-5.10-01 · US-BF-6.8-01/02", version: "1.0" }, [
+  { label: "Buyer: paid, waiting for the seller (Yandex Go)", apply: () => reset({ o: b16("yg"), demo: methodDemo }),
+    notes: ["16: the tracker shows «Оформлен»; the expected date is M-OL22 for Yandex Go, the payment day or the next day: «Ожидается 27.10.2026 – 28.10.2026» (4.8). The branch «Филиал Чиланзар» and the method are shown (US-BF-6.5-04, OL-B7).", "«Отменить заказ» is shown because the seller has not confirmed yet: the buyer may cancel Yandex Go, seller delivery and pickup only in 16 (US-BF-6.6-01, BR-OL7, X2). Click it to open the dialog.", "Demo buttons switch the method: seller delivery shows «Ожидается до {date}», pickup shows M-OL35 «Продавец готовит заказ» and the stage «Готов к выдаче» instead of «В пути». Buyer cancellation in 25 for seller delivery and pickup is still open ⚑ OQ-OL35; this prototype follows 16 only."],
+    src: "PRD 4.2, 4.4, 4.8, OL-B7, OL-B9 · M-OL22, M-OL35 · DR-OL4" },
+  { label: "Buyer: Fargo order cannot be cancelled", apply: () => reset({ o: BO({ m: "fargo", paid: "26.10.2026 в 15:00", exp: "Ожидается 27.10.2026 – 29.10.2026", log: [["26.10.2026 15:00", "Заказ оформлен и оплачен"]] }) }),
+    notes: ["Fargo order in 16: no «Отменить заказ»; M-OL12 explains why, with a «Написать продавцу» link to the chat (US-BF-6.6-01, OL-B9, X1).", "Fargo cannot be cancelled by the buyer even before the seller confirms ⚑ OQ-OL36 (stricter than Yandex Go; management to confirm). A cancel call through the API is refused with M-OL13.", "Expected date: paid 26.10 15:00, branch and buyer in Tashkent → 1–3 days (4.8, AS-OL9 ⚑)."],
+    src: "PRD 4.4 (X1), 4.8 · M-OL12, M-OL13" },
+  { label: "Buyer: cancel dialog with an optional comment", apply: () => reset({ o: b16("yg"), open: bCancelDialog }),
+    notes: ["Title M-OL9, field M-OL10 «Комментарий (необязательно)» with a 0/500 counter (max 500), buttons M-OL11. No reason list (US-BF-6.6-01, OL23, ⚑ OQ-OL34).", "«Отменить заказ» with or without a comment → the own-cancellation state (41, X2).", "Tick «демо: продавец уже подтвердил» and confirm: the first request wins, the buyer sees M-OL33 and the page reloads in «Собирается» without the cancel button (E-OL1, NFR-OL2)."],
+    src: "PRD 4.4, E-OL1 · M-OL9, M-OL10, M-OL11, M-OL33 · DR-OL4" },
+  { label: "Buyer: own cancellation", apply: () => reset({ o: BO({ no: "68726412", st: 41, cancel: { own: true, comment: "Ошиблись с количеством, оформим заново" }, log: [["27.10.2026 09:32", "Вы отменили заказ"], LOG_PAID.slice()] }), demo: () => `<label class="${S.o.cancel.comment ? "" : "on"}"><input type="checkbox" data-sw="nc" ${S.o.cancel.comment ? "" : "checked"}>демо: без комментария</label>`, sw: () => { S.o.cancel.comment = S.o.cancel.comment ? "" : "Ошиблись с количеством, оформим заново"; } }),
+    notes: ["The buyer's own cancellation says «Вы отменили заказ» (M-OL15, AS-OL3) and «Комментарий: …» when one was written (M-OL19) (US-BF-6.6-01).", "The stage tracker is replaced by «Отменён»; the order is in the «Отменённые» tab (US-BF-6.5-04, 4.2).", "The lines keep the ordered quantities (OL-B10, OL10, OL-P12); the stock went back to the branch. The refund is described in the Returns and refunds PRD."],
+    src: "PRD 4.2, 4.4 · M-OL15, M-OL19 · OL-B10" },
+  { label: "Buyer: cancelled by someone else", apply: () => reset({ o: otherCancel(42), demo: () => Object.keys(CODES).map(k => `<button data-sw="${k}" class="${S.o.st === +k ? "on" : ""}">демо: ${CODES[k]}</button>`).join(""), sw: k => { S.o = otherCancel(k); } }),
+    notes: ["Anyone else's cancellation shows «Заказ отменён» (M-OL16) and never who cancelled (US-BF-6.5-04, BR-OL5, BR-OL19, OL-P16).", "Demo switch: 42 → reason M-OL17; 45 with a comment → «Комментарий: нет в наличии» (M-OL19, X5); 46 without a comment → only M-OL16; 50 → reason M-OL18.", "The status codes appear only in the demo switch, never in the buyer UI or the buyer API."],
+    src: "PRD 4.2, 4.4 (X5, X8, X10) · M-OL16 – M-OL19" },
+  { label: "Buyer: on the way, tracker and activity log", apply: () => reset({ o: b30(false), demo: () => `<label class="${S.o.st === 25 ? "on" : ""}"><input type="checkbox" data-sw="early" ${S.o.st === 25 ? "checked" : ""}>демо: момент 26.10.2026 09:10 (у Fargo снова 25)</label>`, sw: () => { S.o = b30(S.o.st !== 25); } }),
+    notes: ["Fargo, 30: the tracker shows «В пути». The activity log, newest first in Tashkent time, has the stage changes and the pickup attempts, including «Повторная попытка забора» (M-OL31) (US-BF-6.5-04, US-BF-6.5-05, OL-B7).", "The carrier moved 30 → 25 → 30 on a new pickup attempt. Tick the demo switch to see the moment the order was back in 25: the tracker still shows «В пути»; it never moves back (OL8, OL-P10, BR-OL13).", "The buyer sees only stage changes and delivery attempts; every other carrier event is for the seller and the admin (4.9)."],
+    src: "PRD 4.2, 4.9, OL-P8, OL-P10 · M-OL22, M-OL31 · DR-OL9" },
+  { label: "Buyer: delivery problem", apply: () => reset({ o: BO({ no: "68726277", m: "fargo", st: 24, max: 1, problem: "служба доставки приостановила доставку", paid: "24.10.2026 в 11:15", exp: "Ожидается 25.10.2026 – 27.10.2026", log: [["27.10.2026 10:40", "Проблема с доставкой"], ["24.10.2026 12:00", "Заказ собирается"], ["24.10.2026 11:15", "Заказ оформлен и оплачен"]] }) }),
+    notes: ["24, 26, 55 and 60 show «Проблема с доставкой» in place of the stage, with M-OL20 and a plain reason from the reason list (here 24 OnHold, Fargo → R7 «служба доставки приостановила доставку») (US-BF-6.5-04, 4.6).", "The order stays in the «Активные» tab (4.2). The admin decides on the problem list (OL6, BR-OL15); when the carrier delivers, the stage moves on (E-OL6).", "The seller sees M-OL21 with the same reason list (R1 – R10)."],
+    src: "PRD 4.2, 4.6 · M-OL20" },
+  { label: "Buyer: delivered, «Я получил заказ»", apply: () => reset({ o: b35(), demo: deliveredDemo }),
+    notes: ["35 delivered 26.10.2026 14:00: stage «Доставлен», «Я получил заказ» (M-OL23) and M-OL25 «Заказ завершится автоматически 29.10.2026 в 23:59.» Day 0 is the delivery day; due at 23:59 on the 3rd calendar day after (US-BF-6.8-01, US-BF-6.8-02, K1, AS-OL4, ⚑ OQ-OL27). «Оставить отзыв» is available from 35 (OL30).", "The button opens M-OL24 with «Подтвердить» · «Не сейчас» (T6); confirm → 40 at once, CompletedBy = Buyer, toast (K3). The «delivered» notice has no button (OQ-79).", "«демо: самовывоз» shows «Получен» instead of «Доставлен» (AS-OL2). «демо: открыт запрос на возврат» replaces the M-OL25 line with «Автозавершение приостановлено, пока открыт запрос» (new text T2, proposed) (4.7, K4, ⚑ OQ-OL29). While a return request or appeal is open, «Я получил заказ» is hidden (US-BF-6.8-01)."],
+    src: "PRD 4.7 (K1 – K4), OL-B11 · M-OL23 – M-OL25 · DR-OL5 (not designed)" },
+  { label: "Buyer: completed", apply: () => reset({ o: BO({ no: "68725984", m: "fargo", st: 40, max: 3, paid: "21.10.2026 в 14:20", deliv: "22.10.2026 в 11:30", done: "24.10.2026", log: [["24.10.2026 18:10", "Заказ завершён"], ["22.10.2026 11:30", "Заказ доставлен"], ["21.10.2026 17:00", "Заказ в пути"], ["21.10.2026 15:00", "Заказ собирается"], ["21.10.2026 14:20", "Заказ оформлен и оплачен"]] }) }),
+    notes: ["40: the tracker stays on «Доставлен» with M-OL26 «Завершён 24.10.2026» (US-BF-6.8-01, US-BF-6.8-02, 4.2).", "No cancel and no «Я получил заказ»; 40 is final (BR-OL10). «Оставить отзыв» stays (OL30).", "The completion date is a past date (24.10.2026) because today is 27.10.2026."],
+    src: "PRD 4.2, 4.7 · M-OL26" },
+  { label: "Buyer: order list tabs", apply: () => reset({ view: "blist" }),
+    notes: ["Tabs «Активные · Завершенные · Отменённые» with counts (US-BF-6.5-04, OL-B8). Active holds 16, 25, 30 and a problem order with the red «Проблема с доставкой»; Завершенные holds 35 and 40 (pickup: «Получен»).", "Отменённые holds every cancellation as «Отменён», including the old order from 03.10.2026 in 47 (E-OL18); no row says who cancelled (BR-OL19).", "Each row shows the expected date (4.8). Rows with a link open the matching scenario of this prototype."],
+    src: "PRD 4.2, 4.8, 13.2 · DR-OL8" },
+  { label: "Seller: order list tabs", apply: () => reset({ view: "slist" }),
+    notes: ["Tabs «Новые · В работе · В доставке · Доставлены · Завершены · Отменены · Проблемные» with counts; each row: №, date, buyer, seller label, method, expected date (US-BF-6.5-04, US-SF-5.10-01, OL-S1).", "«Новые» shows the time left of the 24 hours; under 2 hours in red. «В работе» also holds 20 «Подтверждён» and pickup 32 «Готов к выдаче».", "«Отменены» shows who cancelled: «Отменён покупателем», «Не подтверждён за 24 ч», «Отменён вами», «Отменён Optom», also 48 and 50 (⚑ OQ-OL38). «Проблемные» holds 24, 26, 55, 60 with their seller labels (4.2)."],
+    src: "PRD 4.2, 13.2, OL-S1 · DR-OL8" },
+  { label: "Seller: new order, confirm or reject", apply: () => reset({ view: "sorder", o: s16() }),
+    notes: ["Fargo order in 16: label «Новый» and the time left of the 24 hours (US-SF-5.10-01, OL-S1, OL-S3). «Подтвердить» books Fargo → 25 «В обработке» with a toast and history rows.", "Tick «демо: Fargo не принял заказ» and confirm → 55 «Служба доставки не приняла заказ» with M-OL21; the seller has no action, the admin decides (OL-S8, 4.6).", "«Отклонить» opens a dialog with an optional comment (≤ 500) → 45 «Отменён вами», not 46 (OL-S4, X11, fixes F-OL1). Reject dialog: «Отклонить заказ №{order_no}?», M-OL10, «Отклонить» · «Назад» (T8)."],
+    src: "PRD 4.4, 4.6, 6, OL-S3, OL-S4 · M-OL10, M-OL21" },
+  { label: "Seller: confirm after the 24-hour deadline", apply: () => reset({ view: "sorder", o: SO({ no: "68726402", m: "yg", buyer: "ИП Рахимова Н.", paid: "26.10.2026 10:00", deadline: "27.10.2026 10:00", left: "Время вышло", red: true, expired: true, exp: "26.10.2026 – 27.10.2026", hist: [H16("26.10.2026 10:00")] }) }),
+    notes: ["Paid 26.10 10:00, now 27.10 10:02; the job has not run yet, so the label is still «Новый» and the countdown shows «Время вышло» (US-SF-5.10-01, US-SF-5.7-01).", "«Подтвердить» or «Отклонить» shows M-OL34 and nothing changes (BR-OL20, E-OL7).", "«демо: задание отмены» runs the job (every 5 minutes): → 42 «Не подтверждён за 24 ч», CancelledBy = System, shown to the seller as «Optom.uz», stock back, ORD-07 and SOR-03 (X10, OL-P5, ⚑ 42 is a new status, OQ-OL41)."],
+    src: "PRD 4.4 (X10), 7, E-OL7, OL-P5 · M-OL34" },
+  { label: "Seller: cancel before pickup; the carrier refuses", apply: () => reset({ view: "sorder", o: s25() }),
+    notes: ["Fargo order in 25 «В обработке»: «Отменить заказ» → M-OL9 / M-OL10 (optional comment) / M-OL11. Success → Fargo cancel call → 45 «Отменён вами» with the comment (US-SF-5.7-01, OL-S5, X5).", "Tick «демо: Fargo отказал»: the order stays 25; the seller sees M-OL13 with Fargo's reason translated «Курьер уже забрал посылку»; the order and its history do not change (X6).", "From 30 «В доставке» there is no cancel button: only the admin cancels, and for Fargo and Yandex Go not even the admin (X7, 4.4)."],
+    src: "PRD 4.4 (X5 – X7), OL-S5 · M-OL9 – M-OL11, M-OL13" },
+  { label: "Seller: correction 30 → 35 «Отметить доставленным»", apply: () => reset({ view: "sorder", o: s30(), pdemo: () => `<label class="${S.o.canDeliver ? "" : "on"}"><input type="checkbox" data-d="recent" ${S.o.canDeliver ? "" : "checked"}>демо: событие от Fargo 3 часа назад</label>` }),
+    notes: ["Fargo order in 30; the expected 24.10 – 26.10 has passed and the last carrier event was 25.10 11:20, more than 24 hours ago. «Изменить статус» offers only «Отметить доставленным» (US-SF-5.10-01, 4.5, OL-S6, ⚑ OQ-OL37).", "Dialog M-OL27 with a required comment; empty → M-OL28. Saved → 35 «Доставлен», history line M-OL29 «Доставлен — установил Николаев А. Д.: …», source «исправление»; the buyer gets the delivered notice and the 3-day clock starts (K8).", "Tick «демо: событие от Fargo 3 часа назад»: the option is not offered and the menu says why. The hint text is not in section 13 ⚑."],
+    src: "PRD 4.5, 4.7 (K8), OL-S6 · M-OL27 – M-OL29 · DR-OL6" },
+  { label: "Seller: correction 35 → 30 «Не доставлен»", apply: () => reset({ view: "sorder", o: s35() }),
+    notes: ["Yandex Go order in 35; the buyer wrote in the chat that nothing arrived. «Изменить статус» → «Не доставлен», required comment → 30 «В доставке» (US-SF-5.10-01, 4.5, Yandex Go BR-Y24).", "Effects: the admin problem list gets «Доставка оспорена»; the buyer's stage goes back to «В пути» (the one exception to OL8, BR-OL13); «Я получил заказ» disappears and completion stops; reviews already left stay.", "The buyer notice «Заказ №{order_no} снова в пути» is proposed in section 8 ⚑."],
+    src: "PRD 4.2, 4.5, 4.6, 8 · M-OL27 – M-OL29" },
+  { label: "Seller: order history with who and why", apply: () => reset({ view: "sorder", o: s41(), pdemo: () => `<label class="${S.alt ? "on" : ""}"><input type="checkbox" data-d="alt" ${S.alt ? "checked" : ""}>демо: заказ Fargo, отменённый после событий доставки</label>` }),
+    notes: ["41 «Отменён покупателем»: the cancellation block shows who (Покупатель), when and the comment; the seller sees who cancelled (US-SF-5.7-01, OL-S2, ⚑ OQ-OL38).", "The history lists every status with who and role, the source (действие · задание · событие службы доставки · исправление) and the comment (US-BF-6.5-04, OL-P3).", "A buyer can cancel only in 16, before any courier is booked, so a 41 order has no carrier events. Tick the demo switch to see a 45 Fargo order where the carrier events are merged by time with the statuses as plain Russian sentences (US-BF-6.5-05, 4.9)."],
+    src: "PRD 4.2, 4.9, 11 (OrderStatusHistory, OrderEvent), OL-S2" },
+  { label: "Buyer app: order page", apply: () => reset({ view: "bapp", o: b35() }),
+    notes: ["Buyer app, delivered order: the tracker, «Я получил заказ» (M-OL23) and the auto-complete line M-OL25 (US-BF-6.8-01).", "The button opens a bottom sheet with M-OL24; «Подтвердить» completes the order (40), «Не сейчас» (T6) closes the sheet; the page shows «Завершён 27.10.2026» (M-OL26) with a toast.", "The app has the same rules as the website; the design has no such button (DR-OL5)."],
+    src: "PRD 4.7, OL-B11 · M-OL23 – M-OL26 · DR-OL5 (not designed)" },
+]);
+
+</script></body></html>

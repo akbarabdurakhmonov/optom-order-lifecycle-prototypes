@@ -1,0 +1,47 @@
+/* ---- P-OL2 order pages (buyer and seller); every class starts with o2 ---- */
+.o2state{display:flex;gap:14px;align-items:flex-start;border-radius:14px;padding:14px 16px;margin:6px 0 4px;background:var(--red-50);border:1px solid #f9c9c4}
+.o2state .ic{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-weight:700;color:#fff;flex:none;background:var(--red)}
+.o2state .lbl{font-weight:600;font-size:17px;color:var(--red)}
+.o2state .tx{margin-top:4px}
+.o2state .tx div{margin-top:2px}
+.o2date{display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--ink-2)}
+.o2date svg{width:16px;height:16px;stroke:var(--muted);fill:none;stroke-width:1.6}
+.o2line{display:grid;grid-template-columns:40px 1fr auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.o2line:first-of-type{border-top:none}
+.o2tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:4px 0 14px;flex-wrap:wrap}
+.o2tab{padding:10px 12px;cursor:pointer;color:var(--muted);font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.o2tab.on{color:var(--ink);border-bottom-color:var(--green)}
+.o2tab .c{background:#eef0f2;color:var(--ink-2);border-radius:10px;padding:1px 7px;font-size:12px;margin-left:6px}
+.o2tab.on .c{background:var(--green-50);color:var(--green)}
+.o2tab .c.r{background:#fde8e7;color:var(--red)}
+tr.o2go{cursor:pointer}
+tr.o2go:hover td{background:#fafbfa}
+.o2left{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.o2left.red{color:var(--red)}
+.o2mw{position:relative;display:inline-block}
+.o2menu{position:absolute;top:calc(100% + 6px);left:0;width:360px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.14);padding:6px;z-index:10}
+.o2menu .mi{padding:9px 12px;border-radius:8px;cursor:pointer;font-weight:500}
+.o2menu .mi:hover{background:var(--green-50)}
+.o2menu .mh{padding:8px 12px;color:var(--muted);font-size:12.5px;white-space:normal}
+.o2hist .it{display:grid;grid-template-columns:128px 1fr;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.o2hist .it:first-child{border-top:none}
+.o2hist .tm{color:var(--muted);font-size:12.5px;font-variant-numeric:tabular-nums}
+.o2hist .meta{color:var(--muted);font-size:12.5px;margin-top:3px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.o2hist .cm{font-size:13px;margin-top:3px}
+.o2src{display:inline-block;font-size:11.5px;border-radius:6px;padding:1px 7px;background:#f1f2f4;color:var(--ink-2)}
+.o2src.ev{background:#eef5fe;color:#1d5fd1}
+.o2src.job{background:var(--violet-50);color:var(--violet)}
+.o2src.cor{background:#fff6e0;color:#b54708}
+.o2demo{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.o2demo button,.o2demo label{font-size:12px;border:1px dashed #b8bdc4;background:#fbfbfc;border-radius:8px;padding:6px 9px;cursor:pointer;color:#555b63;display:inline-flex;gap:6px;align-items:center}
+.o2demo button.on,.o2demo label.on{border-color:#d9b400;background:#fff3c4;color:#6b5600}
+.o2demo input{accent-color:#b58a00;margin:0}
+.o2chat{background:#f1f2f4;border-radius:12px;padding:9px 12px;margin-top:10px;font-size:13.5px}
+.o2chat small{display:block;color:var(--muted);margin-top:3px}
+.o2acts{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.phone .o2dim{position:absolute;inset:0;background:rgba(16,18,22,.45);z-index:4}
+.phone .steps .step{font-size:11px}
+.phone .steps .step .dot{width:30px;height:30px}
+.phone .steps::before{top:15px}
+.phone .o2full{width:100%;justify-content:center}
+.phone .o2state{padding:12px}
